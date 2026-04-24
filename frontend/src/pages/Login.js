@@ -58,16 +58,10 @@ const Login = () => {
   
   const handleRoleSelect = (role) => {
     setSelectedRole(role);
-    // Don't auto-fill credentials - keep them empty
+    // Keep username and password empty - user must type manually
     setUsername('');
     setPassword('');
     setError('');
-  };
-  
-  // Function to fill demo credentials when user clicks on demo hint
-  const fillDemoCredentials = (user, pass) => {
-    setUsername(user);
-    setPassword(pass);
   };
   
   const handleSubmit = async (e) => {
@@ -390,7 +384,7 @@ const Login = () => {
             </button>
           </form>
           
-          {/* Simple Demo Message */}
+          {/* Demo Credentials - Display Only (Not Clickable) */}
           <div style={{
             marginTop: '32px',
             padding: '16px',
@@ -400,56 +394,43 @@ const Login = () => {
             border: `1px solid ${currentRole.bg}30`
           }}>
             <p style={{
-              fontSize: '12px',
-              color: '#666',
-              margin: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              flexWrap: 'wrap'
+              fontSize: '11px',
+              color: '#999',
+              marginBottom: '10px',
+              letterSpacing: '0.5px'
             }}>
-              <span>🔐</span>
-              <span>Demo Credentials:</span>
-              <span 
-                onClick={() => fillDemoCredentials('hr_user', 'password123')}
-                style={{
-                  background: '#667eea10',
-                  padding: '4px 10px',
-                  borderRadius: '20px',
-                  cursor: 'pointer',
-                  fontSize: '11px',
-                  color: '#667eea'
-                }}
-              >
-                HR: hr_user / password123
-              </span>
-              <span 
-                onClick={() => fillDemoCredentials('manager_user', 'password123')}
-                style={{
-                  background: '#f5576c10',
-                  padding: '4px 10px',
-                  borderRadius: '20px',
-                  cursor: 'pointer',
-                  fontSize: '11px',
-                  color: '#f5576c'
-                }}
-              >
-                Manager: manager_user / password123
-              </span>
-              <span 
-                onClick={() => fillDemoCredentials('emp_user', 'password123')}
-                style={{
-                  background: '#4facfe10',
-                  padding: '4px 10px',
-                  borderRadius: '20px',
-                  cursor: 'pointer',
-                  fontSize: '11px',
-                  color: '#4facfe'
-                }}
-              >
-                Employee: emp_user / password123
-              </span>
+              🔐 DEMO CREDENTIALS
+            </p>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              fontSize: '11px',
+              color: '#666'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                <span style={{ color: '#667eea' }}>👑 HR:</span>
+                <span>hr_user</span>
+                <span>••••••••</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                <span style={{ color: '#f5576c' }}>📊 Manager:</span>
+                <span>manager_user</span>
+                <span>••••••••</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                <span style={{ color: '#4facfe' }}>👤 Employee:</span>
+                <span>emp_user</span>
+                <span>••••••••</span>
+              </div>
+            </div>
+            <p style={{
+              fontSize: '10px',
+              color: '#bbb',
+              marginTop: '10px',
+              marginBottom: 0
+            }}>
+              Password for all: <strong>password123</strong>
             </p>
           </div>
         </div>
