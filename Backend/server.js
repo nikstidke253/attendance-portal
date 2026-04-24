@@ -8,22 +8,30 @@ app.use(express.json());
 
 const JWT_SECRET = 'your_super_secret_key_123';
 
-// Hardcoded Users - योग्य क्रेडेन्शियल्स इथे आहेत
+// Hardcoded Users
 const users = [
   { id: 1, username: 'hr_user', password: 'password123', email: 'hr@company.com', role: 'hr', isActive: true },
   { id: 2, username: 'manager_user', password: 'password123', email: 'manager@company.com', role: 'manager', isActive: true },
   { id: 3, username: 'emp_user', password: 'password123', email: 'employee@company.com', role: 'employee', isActive: true }
 ];
 
-// ============== TEST ROUTE ==============
+// ============== TEST ROUTES ==============
+app.get('/', (req, res) => {
+  res.send('✅ Attendance Portal Backend is running! Use /api/test to verify API.');
+});
+
 app.get('/api/test', (req, res) => {
-  res.json({ message: 'Backend is working!', users: users.map(u => ({ username: u.username, role: u.role })) });
+  res.json({ 
+    message: 'Backend is working!', 
+    status: 'active',
+    users: users.map(u => ({ username: u.username, role: u.role }))
+  });
 });
 
 // ============== LOGIN ROUTE ==============
 app.post('/api/auth/login', (req, res) => {
   const { username, password } = req.body;
-  console.log('📝 Login Attempt:', username, password);
+  console.log('📝 Login attempt:', username);
   
   const user = users.find(u => u.username === username);
   
@@ -43,21 +51,40 @@ app.post('/api/auth/login', (req, res) => {
     { expiresIn: '24h' }
   );
   
-  console.log('✅ Login Successful:', username);
-  res.json({ token, user: { id: user.id, username: user.username, email: user.email, role: user.role } });
+  console.log('✅ Login successful:', username);
+  
+  res.json({
+    token,
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role
+    }
+  });
 });
 
-// ============== VERIFY TOKEN ROUTE ==============
+// ============== VERIFY TOKEN ==============
 app.get('/api/auth/me', (req, res) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ error: 'No token provided' });
+  if (!authHeader) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
   
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     const user = users.find(u => u.id === decoded.id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json({ id: user.id, username: user.username, email: user.email, role: user.role, isActive: user.isActive });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive
+    });
   } catch (error) {
     res.status(401).json({ error: 'Invalid token' });
   }
@@ -77,15 +104,22 @@ app.get('/api/leave-types', (req, res) => {
 });
 
 app.get('/api/dashboard/stats', (req, res) => {
-  res.json({ totalUsers: users.length, pendingLeaves: 2, approvedLeaves: 5, totalLeaveTypes: 3 });
+  res.json({
+    totalUsers: users.length,
+    pendingLeaves: 2,
+    approvedLeaves: 5,
+    totalLeaveTypes: 3
+  });
 });
 
 // Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n========================================`);
-  console.log(`🚀 Server is running on port ${PORT}`);
-  console.log(`📝 Test Credentials:`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📍 Test API: /api/test`);
+  console.log(`📍 Login API: /api/auth/login`);
+  console.log(`\n📝 Test Credentials:`);
   console.log(`   👑 HR: hr_user / password123`);
   console.log(`   📊 Manager: manager_user / password123`);
   console.log(`   👤 Employee: emp_user / password123`);
