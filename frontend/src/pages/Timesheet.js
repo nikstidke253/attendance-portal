@@ -14,9 +14,9 @@ const Timesheet = () => {
     try {
       let response;
       if (user?.role === 'hr' || user?.role === 'manager') {
-        response = await axios.get('http://localhost:5000/api/attendance/team');
+        response = await axios.get('https://attendance-portal-1-u1rw.onrender.com/api/attendance/team');
       } else {
-        response = await axios.get('http://localhost:5000/api/attendance/my');
+        response = await axios.get('https://attendance-portal-1-u1rw.onrender.com/api/attendance/my');
       }
       setAttendance(response.data);
     } catch (error) {

@@ -413,7 +413,7 @@ const Login = () => {
           }
         }
       `}</style>
-    </div>
+    </div>  
   );
 };
 

@@ -19,13 +19,13 @@ const LeaveApproval = () => {
       let response;
       if (user?.role === 'hr') {
         // HR can view all leave requests
-        response = await axios.get('http://localhost:5000/api/leaves/all');
+        response = await axios.get('https://attendance-portal-1-u1rw.onrender.com/api/leaves/all');
       } else if (user?.role === 'manager') {
         // Manager can view pending leaves of team members
         if (viewType === 'pending') {
-          response = await axios.get('http://localhost:5000/api/leaves/pending');
+          response = await axios.get('https://attendance-portal-1-u1rw.onrender.com/api/leaves/pending');
         } else {
-          response = await axios.get('http://localhost:5000/api/leaves/all');
+          response = await axios.get('https://attendance-portal-1-u1rw.onrender.com/api/leaves/all');
         }
       }
       setLeaveRequests(response?.data || []);
@@ -43,7 +43,7 @@ const LeaveApproval = () => {
     
     setLoading(true);
     try {
-      await axios.put(`http://localhost:5000/api/leaves/${selectedLeave.id}/${action}`, { remark });
+      await axios.put(`https://attendance-portal-1-u1rw.onrender.com/api/leaves/${selectedLeave.id}/${action}`, { remark });
       alert(`Leave ${action}ed successfully`);
       setSelectedLeave(null);
       setRemark('');

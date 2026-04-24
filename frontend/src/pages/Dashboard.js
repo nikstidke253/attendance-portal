@@ -15,7 +15,7 @@ const Dashboard = () => {
   
   const fetchStats = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/dashboard/stats');
+      const res = await axios.get('https://attendance-portal-1-u1rw.onrender.com/api/dashboard/stats');
       setStats(res.data);
     } catch (err) {
       console.error('Error:', err);

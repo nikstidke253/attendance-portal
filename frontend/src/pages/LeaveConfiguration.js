@@ -17,7 +17,7 @@ const LeaveConfiguration = () => {
   
   const fetchLeaveTypes = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/leave-types');
+      const response = await axios.get('https://attendance-portal-1-u1rw.onrender.com/api/leave-types');
       setLeaveTypes(response.data);
     } catch (error) {
       console.error('Error fetching leave types:', error);
@@ -35,10 +35,10 @@ const LeaveConfiguration = () => {
     setLoading(true);
     try {
       if (editing) {
-        await axios.put(`http://localhost:5000/api/leave-types/${editing.id}`, formData);
+        await axios.put(`https://attendance-portal-1-u1rw.onrender.com/api/leave-types/${editing.id}`, formData);
         alert('Leave type updated successfully');
       } else {
-        await axios.post('http://localhost:5000/api/leave-types', formData);
+        await axios.post('https://attendance-portal-1-u1rw.onrender.com/api/leave-types', formData);
         alert('Leave type created successfully');
       }
       setShowForm(false);
@@ -54,7 +54,7 @@ const LeaveConfiguration = () => {
   const handleDelete = async (id, name) => {
     if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
       try {
-        await axios.delete(`http://localhost:5000/api/leave-types/${id}`);
+        await axios.delete(`https://attendance-portal-1-u1rw.onrender.com/api/leave-types/${id}`);
         alert('Leave type deleted successfully');
         fetchLeaveTypes();
       } catch (error) {

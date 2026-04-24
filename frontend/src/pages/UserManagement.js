@@ -21,7 +21,7 @@ const UserManagement = () => {
   
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/users');
+      const response = await axios.get('https://attendance-portal-1-u1rw.onrender.com/api/users');
       setUsers(response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -31,7 +31,7 @@ const UserManagement = () => {
   
   const fetchManagers = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/users/managers');
+      const response = await axios.get('https://attendance-portal-1-u1rw.onrender.com/api/users/managers');
       setManagers(response.data);
     } catch (error) {
       console.error('Error fetching managers:', error);
@@ -47,7 +47,7 @@ const UserManagement = () => {
     
     setLoading(true);
     try {
-      await axios.post('http://localhost:5000/api/users', formData);
+      await axios.post('https://attendance-portal-1-u1rw.onrender.com/api/users', formData);
       alert('User created successfully');
       setShowForm(false);
       setFormData({ username: '', email: '', password: '', role: 'employee', managerId: '' });
@@ -64,7 +64,7 @@ const UserManagement = () => {
     
     if (window.confirm(`Are you sure you want to ${action} ${user.username}?`)) {
       try {
-        await axios.put(`http://localhost:5000/api/users/${user.id}`, {
+        await axios.put(`https://attendance-portal-1-u1rw.onrender.com/api/users/${user.id}`, {
           role: user.role,
           managerId: user.managerId,
           isActive: newStatus
