@@ -58,9 +58,16 @@ const Login = () => {
   
   const handleRoleSelect = (role) => {
     setSelectedRole(role);
-    setUsername(roleCredentials[role].username);
-    setPassword(roleCredentials[role].password);
+    // Don't auto-fill credentials - keep them empty
+    setUsername('');
+    setPassword('');
     setError('');
+  };
+  
+  // Function to fill demo credentials when user clicks on demo hint
+  const fillDemoCredentials = (user, pass) => {
+    setUsername(user);
+    setPassword(pass);
   };
   
   const handleSubmit = async (e) => {
@@ -104,7 +111,6 @@ const Login = () => {
         position: 'relative',
         overflow: 'hidden'
       }}>
-        {/* Decorative Background Pattern */}
         <div style={{
           position: 'absolute',
           top: 0,
@@ -121,7 +127,6 @@ const Login = () => {
           position: 'relative',
           zIndex: 1
         }}>
-          {/* Role Image */}
           <div style={{
             marginBottom: '32px',
             animation: 'fadeInUp 0.5s ease'
@@ -159,7 +164,6 @@ const Login = () => {
             {currentRole.description}
           </p>
           
-          {/* Feature List */}
           <div style={{
             display: 'flex',
             flexWrap: 'wrap',
@@ -180,7 +184,6 @@ const Login = () => {
             ))}
           </div>
           
-          {/* Stats */}
           <div style={{
             display: 'flex',
             gap: '40px',
@@ -383,19 +386,70 @@ const Login = () => {
                 if (!loading) e.currentTarget.style.opacity = '1';
               }}
             >
-              {loading ? 'Logging in...' : `Sign in as ${currentRole.name}`}
+              {loading ? 'Logging in...' : `Sign In`}
             </button>
           </form>
           
+          {/* Simple Demo Message */}
           <div style={{
             marginTop: '32px',
             padding: '16px',
             background: '#f8f9fa',
             borderRadius: '12px',
-            textAlign: 'center'
+            textAlign: 'center',
+            border: `1px solid ${currentRole.bg}30`
           }}>
-            <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>
-              🔐 Demo Mode • Select a role above to login
+            <p style={{
+              fontSize: '12px',
+              color: '#666',
+              margin: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              flexWrap: 'wrap'
+            }}>
+              <span>🔐</span>
+              <span>Demo Credentials:</span>
+              <span 
+                onClick={() => fillDemoCredentials('hr_user', 'password123')}
+                style={{
+                  background: '#667eea10',
+                  padding: '4px 10px',
+                  borderRadius: '20px',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  color: '#667eea'
+                }}
+              >
+                HR: hr_user / password123
+              </span>
+              <span 
+                onClick={() => fillDemoCredentials('manager_user', 'password123')}
+                style={{
+                  background: '#f5576c10',
+                  padding: '4px 10px',
+                  borderRadius: '20px',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  color: '#f5576c'
+                }}
+              >
+                Manager: manager_user / password123
+              </span>
+              <span 
+                onClick={() => fillDemoCredentials('emp_user', 'password123')}
+                style={{
+                  background: '#4facfe10',
+                  padding: '4px 10px',
+                  borderRadius: '20px',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  color: '#4facfe'
+                }}
+              >
+                Employee: emp_user / password123
+              </span>
             </p>
           </div>
         </div>
