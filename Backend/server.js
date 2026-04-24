@@ -1,13 +1,15 @@
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 
 const app = express();
 
+// JWT Secret (same for all)
+const JWT_SECRET = 'your_secret_key_here';
+
 // Middleware
 app.use(cors({
-  origin: "https://attendance-portal-two.vercel.app",
+  origin: ["http://localhost:3000", "https://attendance-portal-two.vercel.app"],
   credentials: true
 }));
 app.use(express.json());
@@ -39,13 +41,16 @@ const sessionTimeout = (req, res, next) => {
   next();
 };
 
+// Apply session timeout middleware
+app.use(sessionTimeout);
+
 // Mock Database
 let users = [
   { 
     id: 1, 
     username: 'hr_user', 
     email: 'hr@company.com', 
-    password: '$2a$10$rqG5t6kqLlLqLlLqLlLqLuO5KqfL5KqfL5KqfL5Kq',
+    password: 'password123',
     role: 'hr', 
     isActive: true,
     managerId: null,
@@ -55,7 +60,7 @@ let users = [
     id: 2, 
     username: 'manager_user', 
     email: 'manager@company.com', 
-    password: '$2a$10$rqG5t6kqLlLqLlLqLlLqLuO5KqfL5KqfL5KqfL5Kq',
+    password: 'password123',
     role: 'manager', 
     isActive: true,
     managerId: null,
@@ -65,7 +70,7 @@ let users = [
     id: 3, 
     username: 'emp_user', 
     email: 'employee@company.com', 
-    password: '$2a$10$rqG5t6kqLlLqLlLqLlLqLuO5KqfL5KqfL5KqfL5Kq',
+    password: 'password123',
     role: 'employee', 
     isActive: true,
     managerId: 2,
@@ -108,10 +113,8 @@ let leaveRequests = [
 
 let attendance = [];
 
-const JWT_SECRET = 'your_secret_key_here';
-
 // Auth Middleware
-const authMiddleware = async (req, res, next) => {
+const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).json({ error: 'No token provided' });
@@ -136,6 +139,11 @@ const checkRole = (roles) => {
   };
 };
 
+// ============== TEST ROUTE ==============
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Backend is working!', timestamp: new Date().toISOString() });
+});
+
 // ============== AUTH ROUTES ==============
 app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
@@ -144,15 +152,18 @@ app.post('/api/auth/login', async (req, res) => {
   const user = users.find(u => u.username === username);
   
   if (!user) {
+    console.log('User not found:', username);
     return res.status(401).json({ error: 'Invalid credentials' });
   }
   
   if (!user.isActive) {
+    console.log('User inactive:', username);
     return res.status(401).json({ error: 'Account is deactivated' });
   }
   
-  // Check password (plain text for demo)
-  if (password !== 'password123') {
+  // Check password
+  if (password !== user.password) {
+    console.log('Password mismatch for:', username);
     return res.status(401).json({ error: 'Invalid credentials' });
   }
   
@@ -193,7 +204,6 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
 });
 
 // ============== USER ROUTES ==============
-// HR only: View all users
 app.get('/api/users', authMiddleware, checkRole(['hr']), (req, res) => {
   const usersWithoutPassword = users.map(u => {
     const { password, ...userWithoutPassword } = u;
@@ -206,7 +216,6 @@ app.get('/api/users', authMiddleware, checkRole(['hr']), (req, res) => {
   res.json(usersWithoutPassword);
 });
 
-// HR only: Create user
 app.post('/api/users', authMiddleware, checkRole(['hr']), async (req, res) => {
   const { username, email, password, role, managerId } = req.body;
   
@@ -219,7 +228,7 @@ app.post('/api/users', authMiddleware, checkRole(['hr']), async (req, res) => {
     id: users.length + 1,
     username,
     email,
-    password: '$2a$10$rqG5t6kqLlLqLlLqLlLqLuO5KqfL5KqfL5KqfL5Kq',
+    password: password || 'password123',
     role: role || 'employee',
     managerId: managerId || null,
     isActive: true,
@@ -232,7 +241,6 @@ app.post('/api/users', authMiddleware, checkRole(['hr']), async (req, res) => {
   res.status(201).json(userWithoutPassword);
 });
 
-// HR only: Update user
 app.put('/api/users/:id', authMiddleware, checkRole(['hr']), (req, res) => {
   const { id } = req.params;
   const { role, managerId, isActive } = req.body;
@@ -253,19 +261,16 @@ app.put('/api/users/:id', authMiddleware, checkRole(['hr']), (req, res) => {
   res.json(userWithoutPassword);
 });
 
-// Get managers list
 app.get('/api/users/managers', authMiddleware, (req, res) => {
   const managers = users.filter(u => u.role === 'manager' && u.isActive);
   res.json(managers);
 });
 
 // ============== LEAVE TYPE ROUTES ==============
-// All roles: View leave types
 app.get('/api/leave-types', authMiddleware, (req, res) => {
   res.json(leaveTypes);
 });
 
-// HR only: Create leave type
 app.post('/api/leave-types', authMiddleware, checkRole(['hr']), (req, res) => {
   const { name, annualQuota } = req.body;
   
@@ -284,7 +289,6 @@ app.post('/api/leave-types', authMiddleware, checkRole(['hr']), (req, res) => {
   res.status(201).json(newLeaveType);
 });
 
-// HR only: Update leave type
 app.put('/api/leave-types/:id', authMiddleware, checkRole(['hr']), (req, res) => {
   const { id } = req.params;
   const { name, annualQuota } = req.body;
@@ -303,7 +307,6 @@ app.put('/api/leave-types/:id', authMiddleware, checkRole(['hr']), (req, res) =>
   res.json(leaveTypes[typeIndex]);
 });
 
-// HR only: Delete leave type
 app.delete('/api/leave-types/:id', authMiddleware, checkRole(['hr']), (req, res) => {
   const { id } = req.params;
   
@@ -317,7 +320,6 @@ app.delete('/api/leave-types/:id', authMiddleware, checkRole(['hr']), (req, res)
 });
 
 // ============== LEAVE REQUEST ROUTES ==============
-// HR only: View all leave requests
 app.get('/api/leaves/all', authMiddleware, checkRole(['hr']), (req, res) => {
   const leavesWithDetails = leaveRequests.map(leave => {
     const user = users.find(u => u.id === leave.userId);
@@ -331,7 +333,6 @@ app.get('/api/leaves/all', authMiddleware, checkRole(['hr']), (req, res) => {
   res.json(leavesWithDetails);
 });
 
-// Employee & Manager: View own leave requests
 app.get('/api/leaves/my', authMiddleware, (req, res) => {
   const myLeaves = leaveRequests.filter(leave => leave.userId === req.user.id);
   const leavesWithDetails = myLeaves.map(leave => {
@@ -344,7 +345,6 @@ app.get('/api/leaves/my', authMiddleware, (req, res) => {
   res.json(leavesWithDetails);
 });
 
-// Manager only: View pending leaves of team members
 app.get('/api/leaves/pending', authMiddleware, checkRole(['manager']), (req, res) => {
   const subordinates = users.filter(u => u.managerId === req.user.id);
   const subordinateIds = subordinates.map(s => s.id);
@@ -365,7 +365,6 @@ app.get('/api/leaves/pending', authMiddleware, checkRole(['manager']), (req, res
   res.json(leavesWithDetails);
 });
 
-// Employee & Manager: Apply for leave
 app.post('/api/leaves/apply', authMiddleware, checkRole(['employee', 'manager']), (req, res) => {
   const { leaveTypeId, startDate, endDate, reason } = req.body;
   
@@ -391,7 +390,6 @@ app.post('/api/leaves/apply', authMiddleware, checkRole(['employee', 'manager'])
   });
 });
 
-// Manager only: Approve leave (cannot approve own leave)
 app.put('/api/leaves/:id/approve', authMiddleware, checkRole(['manager']), (req, res) => {
   const { id } = req.params;
   const { remark } = req.body;
@@ -403,14 +401,12 @@ app.put('/api/leaves/:id/approve', authMiddleware, checkRole(['manager']), (req,
   
   const leave = leaveRequests[leaveIndex];
   
-  // Cannot approve own leave
   if (leave.userId === req.user.id) {
     return res.status(403).json({ error: 'You cannot approve your own leave request' });
   }
   
   const user = users.find(u => u.id === leave.userId);
   
-  // Check if subordinate
   if (user.managerId !== req.user.id) {
     return res.status(403).json({ error: 'You can only approve leave of your team members' });
   }
@@ -429,7 +425,6 @@ app.put('/api/leaves/:id/approve', authMiddleware, checkRole(['manager']), (req,
   res.json(leaveRequests[leaveIndex]);
 });
 
-// Manager only: Reject leave (cannot reject own leave)
 app.put('/api/leaves/:id/reject', authMiddleware, checkRole(['manager']), (req, res) => {
   const { id } = req.params;
   const { remark } = req.body;
@@ -441,14 +436,12 @@ app.put('/api/leaves/:id/reject', authMiddleware, checkRole(['manager']), (req, 
   
   const leave = leaveRequests[leaveIndex];
   
-  // Cannot reject own leave
   if (leave.userId === req.user.id) {
     return res.status(403).json({ error: 'You cannot reject your own leave request' });
   }
   
   const user = users.find(u => u.id === leave.userId);
   
-  // Check if subordinate
   if (user.managerId !== req.user.id) {
     return res.status(403).json({ error: 'You can only reject leave of your team members' });
   }
@@ -468,13 +461,11 @@ app.put('/api/leaves/:id/reject', authMiddleware, checkRole(['manager']), (req, 
 });
 
 // ============== ATTENDANCE ROUTES ==============
-// View own attendance (All roles)
 app.get('/api/attendance/my', authMiddleware, (req, res) => {
   const myAttendance = attendance.filter(a => a.userId === req.user.id);
   res.json(myAttendance);
 });
 
-// Check today's status
 app.get('/api/attendance/today', authMiddleware, (req, res) => {
   const today = new Date().toISOString().split('T')[0];
   const todayAttendance = attendance.find(
@@ -489,7 +480,6 @@ app.get('/api/attendance/today', authMiddleware, (req, res) => {
   });
 });
 
-// Check in (Employee & Manager only)
 app.post('/api/attendance/checkin', authMiddleware, checkRole(['employee', 'manager']), (req, res) => {
   const today = new Date().toISOString().split('T')[0];
   const existing = attendance.find(
@@ -519,7 +509,6 @@ app.post('/api/attendance/checkin', authMiddleware, checkRole(['employee', 'mana
   }
 });
 
-// Check out (Employee & Manager only)
 app.post('/api/attendance/checkout', authMiddleware, checkRole(['employee', 'manager']), (req, res) => {
   const today = new Date().toISOString().split('T')[0];
   const record = attendance.find(
@@ -539,7 +528,6 @@ app.post('/api/attendance/checkout', authMiddleware, checkRole(['employee', 'man
   res.json(record);
 });
 
-// View team attendance (Manager & HR)
 app.get('/api/attendance/team', authMiddleware, checkRole(['manager', 'hr']), (req, res) => {
   let teamAttendance;
   
@@ -593,9 +581,11 @@ app.get('/api/dashboard/stats', authMiddleware, (req, res) => {
 });
 
 // Start server
-const PORT = 5000;
-app.listen(PORT, () => {
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`📍 Test API: http://localhost:${PORT}/api/test`);
+  console.log(`📍 Login API: http://localhost:${PORT}/api/auth/login`);
   console.log(`\n📝 Login Credentials:`);
   console.log(`   👑 HR: hr_user / password123`);
   console.log(`   📊 Manager: manager_user / password123`);

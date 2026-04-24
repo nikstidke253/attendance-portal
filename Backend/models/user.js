@@ -65,9 +65,14 @@ module.exports = (sequelize, DataTypes) => {
     }
   });
 
-  User.prototype.validatePassword = async function(password) {
+User.prototype.validatePassword = async function(password) {
+    // Local development साठी plain password check
+    if (process.env.NODE_ENV === 'development') {
+        return this.password === password;
+    }
+    // Production साठी bcrypt check
     return await bcrypt.compare(password, this.password);
-  };
+};
 
   return User;
 };
