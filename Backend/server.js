@@ -7,11 +7,35 @@ const app = express();
 // JWT Secret (same for all)
 const JWT_SECRET = 'your_secret_key_here';
 
-// Middleware
+// CORS Configuration - Allow multiple origins
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://attendance-portal.vercel.app",
+  "https://attendance-portal-two.vercel.app",
+  "https://attendance-portal-git-main.vercel.app"
+];
+
+// CORS Middleware - Allow all requests from allowed origins
 app.use(cors({
-  origin: ["http://localhost:3000", "https://attendance-portal-two.vercel.app"],
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, postman)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('❌ Blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+
+// Handle preflight requests
+app.options('*', cors());
+
 app.use(express.json());
 
 // Track user last activity for session timeout
@@ -147,23 +171,23 @@ app.get('/api/test', (req, res) => {
 // ============== AUTH ROUTES ==============
 app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
-  console.log('Login attempt:', username);
+  console.log('📝 Login attempt:', username);
   
   const user = users.find(u => u.username === username);
   
   if (!user) {
-    console.log('User not found:', username);
+    console.log('❌ User not found:', username);
     return res.status(401).json({ error: 'Invalid credentials' });
   }
   
   if (!user.isActive) {
-    console.log('User inactive:', username);
+    console.log('❌ User inactive:', username);
     return res.status(401).json({ error: 'Account is deactivated' });
   }
   
   // Check password
   if (password !== user.password) {
-    console.log('Password mismatch for:', username);
+    console.log('❌ Password mismatch for:', username);
     return res.status(401).json({ error: 'Invalid credentials' });
   }
   
@@ -175,7 +199,7 @@ app.post('/api/auth/login', async (req, res) => {
   
   userLastActivity.set(user.id, Date.now());
   
-  console.log('Login successful:', user.username, user.role);
+  console.log('✅ Login successful:', user.username, user.role);
   
   res.json({
     token,
@@ -590,4 +614,6 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`   👑 HR: hr_user / password123`);
   console.log(`   📊 Manager: manager_user / password123`);
   console.log(`   👤 Employee: emp_user / password123`);
+  console.log(`\n🔗 CORS Allowed Origins:`);
+  allowedOrigins.forEach(origin => console.log(`   - ${origin}`));
 });
