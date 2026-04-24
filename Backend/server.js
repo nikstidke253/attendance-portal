@@ -3,175 +3,27 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 
 const app = express();
-
-// JWT Secret (same for all)
-const JWT_SECRET = 'your_secret_key_here';
-
-// CORS Configuration - Allow multiple origins
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://attendance-portal.vercel.app",
-  "https://attendance-portal-two.vercel.app",
-  "https://attendance-portal-git-main.vercel.app"
-];
-
-// CORS Middleware - Allow all requests from allowed origins
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, postman)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.log('❌ Blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-}));
-
-// Handle preflight requests
-app.options('*', cors());
-
+app.use(cors());
 app.use(express.json());
 
-// Track user last activity for session timeout
-const userLastActivity = new Map();
+const JWT_SECRET = 'your_super_secret_key_123';
 
-// Session timeout middleware (15 minutes)
-const sessionTimeout = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  
-  if (token) {
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      const lastActivity = userLastActivity.get(decoded.id);
-      const now = Date.now();
-      
-      if (lastActivity && (now - lastActivity) > 15 * 60 * 1000) {
-        userLastActivity.delete(decoded.id);
-        return res.status(401).json({ error: 'Session expired due to 15 minutes of inactivity' });
-      }
-      
-      userLastActivity.set(decoded.id, now);
-    } catch (error) {
-      return res.status(401).json({ error: 'Invalid session' });
-    }
-  }
-  
-  next();
-};
-
-// Apply session timeout middleware
-app.use(sessionTimeout);
-
-// Mock Database
-let users = [
-  { 
-    id: 1, 
-    username: 'hr_user', 
-    email: 'hr@company.com', 
-    password: 'password123',
-    role: 'hr', 
-    isActive: true,
-    managerId: null,
-    createdAt: new Date()
-  },
-  { 
-    id: 2, 
-    username: 'manager_user', 
-    email: 'manager@company.com', 
-    password: 'password123',
-    role: 'manager', 
-    isActive: true,
-    managerId: null,
-    createdAt: new Date()
-  },
-  { 
-    id: 3, 
-    username: 'emp_user', 
-    email: 'employee@company.com', 
-    password: 'password123',
-    role: 'employee', 
-    isActive: true,
-    managerId: 2,
-    createdAt: new Date()
-  }
+// Hardcoded Users - योग्य क्रेडेन्शियल्स इथे आहेत
+const users = [
+  { id: 1, username: 'hr_user', password: 'password123', email: 'hr@company.com', role: 'hr', isActive: true },
+  { id: 2, username: 'manager_user', password: 'password123', email: 'manager@company.com', role: 'manager', isActive: true },
+  { id: 3, username: 'emp_user', password: 'password123', email: 'employee@company.com', role: 'employee', isActive: true }
 ];
-
-let leaveTypes = [
-  { id: 1, name: 'Casual Leave', annualQuota: 12 },
-  { id: 2, name: 'Sick Leave', annualQuota: 10 },
-  { id: 3, name: 'Earned Leave', annualQuota: 15 }
-];
-
-let leaveRequests = [
-  {
-    id: 1,
-    userId: 3,
-    leaveTypeId: 1,
-    startDate: '2024-12-20',
-    endDate: '2024-12-22',
-    reason: 'Family function',
-    status: 'pending',
-    remark: null,
-    actionedById: null,
-    createdAt: new Date()
-  },
-  {
-    id: 2,
-    userId: 2,
-    leaveTypeId: 1,
-    startDate: '2024-12-25',
-    endDate: '2024-12-26',
-    reason: 'Personal work',
-    status: 'pending',
-    remark: null,
-    actionedById: null,
-    createdAt: new Date()
-  }
-];
-
-let attendance = [];
-
-// Auth Middleware
-const authMiddleware = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(401).json({ error: 'No token provided' });
-  }
-
-  const token = authHeader.split(' ')[1];
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
-};
-
-const checkRole = (roles) => {
-  return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-    next();
-  };
-};
 
 // ============== TEST ROUTE ==============
 app.get('/api/test', (req, res) => {
-  res.json({ message: 'Backend is working!', timestamp: new Date().toISOString() });
+  res.json({ message: 'Backend is working!', users: users.map(u => ({ username: u.username, role: u.role })) });
 });
 
-// ============== AUTH ROUTES ==============
-app.post('/api/auth/login', async (req, res) => {
+// ============== LOGIN ROUTE ==============
+app.post('/api/auth/login', (req, res) => {
   const { username, password } = req.body;
-  console.log('📝 Login attempt:', username);
+  console.log('📝 Login Attempt:', username, password);
   
   const user = users.find(u => u.username === username);
   
@@ -180,13 +32,7 @@ app.post('/api/auth/login', async (req, res) => {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
   
-  if (!user.isActive) {
-    console.log('❌ User inactive:', username);
-    return res.status(401).json({ error: 'Account is deactivated' });
-  }
-  
-  // Check password
-  if (password !== user.password) {
+  if (user.password !== password) {
     console.log('❌ Password mismatch for:', username);
     return res.status(401).json({ error: 'Invalid credentials' });
   }
@@ -194,426 +40,54 @@ app.post('/api/auth/login', async (req, res) => {
   const token = jwt.sign(
     { id: user.id, username: user.username, role: user.role },
     JWT_SECRET,
-    { expiresIn: '15m' }
+    { expiresIn: '24h' }
   );
   
-  userLastActivity.set(user.id, Date.now());
-  
-  console.log('✅ Login successful:', user.username, user.role);
-  
-  res.json({
-    token,
-    user: {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      role: user.role
-    }
-  });
+  console.log('✅ Login Successful:', username);
+  res.json({ token, user: { id: user.id, username: user.username, email: user.email, role: user.role } });
 });
 
-app.get('/api/auth/me', authMiddleware, (req, res) => {
-  const user = users.find(u => u.id === req.user.id);
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
-  }
+// ============== VERIFY TOKEN ROUTE ==============
+app.get('/api/auth/me', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: 'No token provided' });
   
-  res.json({
-    id: user.id,
-    username: user.username,
-    email: user.email,
-    role: user.role,
-    isActive: user.isActive
-  });
-});
-
-// ============== USER ROUTES ==============
-app.get('/api/users', authMiddleware, checkRole(['hr']), (req, res) => {
-  const usersWithoutPassword = users.map(u => {
-    const { password, ...userWithoutPassword } = u;
-    const manager = users.find(m => m.id === u.managerId);
-    return {
-      ...userWithoutPassword,
-      Manager: manager ? { id: manager.id, username: manager.username } : null
-    };
-  });
-  res.json(usersWithoutPassword);
-});
-
-app.post('/api/users', authMiddleware, checkRole(['hr']), async (req, res) => {
-  const { username, email, password, role, managerId } = req.body;
-  
-  const existingUser = users.find(u => u.username === username || u.email === email);
-  if (existingUser) {
-    return res.status(400).json({ error: 'Username or email already exists' });
-  }
-  
-  const newUser = {
-    id: users.length + 1,
-    username,
-    email,
-    password: password || 'password123',
-    role: role || 'employee',
-    managerId: managerId || null,
-    isActive: true,
-    createdAt: new Date()
-  };
-  
-  users.push(newUser);
-  
-  const { password: _, ...userWithoutPassword } = newUser;
-  res.status(201).json(userWithoutPassword);
-});
-
-app.put('/api/users/:id', authMiddleware, checkRole(['hr']), (req, res) => {
-  const { id } = req.params;
-  const { role, managerId, isActive } = req.body;
-  
-  const userIndex = users.findIndex(u => u.id === parseInt(id));
-  if (userIndex === -1) {
-    return res.status(404).json({ error: 'User not found' });
-  }
-  
-  users[userIndex] = {
-    ...users[userIndex],
-    role: role || users[userIndex].role,
-    managerId: managerId !== undefined ? managerId : users[userIndex].managerId,
-    isActive: isActive !== undefined ? isActive : users[userIndex].isActive
-  };
-  
-  const { password, ...userWithoutPassword } = users[userIndex];
-  res.json(userWithoutPassword);
-});
-
-app.get('/api/users/managers', authMiddleware, (req, res) => {
-  const managers = users.filter(u => u.role === 'manager' && u.isActive);
-  res.json(managers);
-});
-
-// ============== LEAVE TYPE ROUTES ==============
-app.get('/api/leave-types', authMiddleware, (req, res) => {
-  res.json(leaveTypes);
-});
-
-app.post('/api/leave-types', authMiddleware, checkRole(['hr']), (req, res) => {
-  const { name, annualQuota } = req.body;
-  
-  const existing = leaveTypes.find(lt => lt.name === name);
-  if (existing) {
-    return res.status(400).json({ error: 'Leave type already exists' });
-  }
-  
-  const newLeaveType = {
-    id: leaveTypes.length + 1,
-    name,
-    annualQuota: parseInt(annualQuota)
-  };
-  
-  leaveTypes.push(newLeaveType);
-  res.status(201).json(newLeaveType);
-});
-
-app.put('/api/leave-types/:id', authMiddleware, checkRole(['hr']), (req, res) => {
-  const { id } = req.params;
-  const { name, annualQuota } = req.body;
-  
-  const typeIndex = leaveTypes.findIndex(lt => lt.id === parseInt(id));
-  if (typeIndex === -1) {
-    return res.status(404).json({ error: 'Leave type not found' });
-  }
-  
-  leaveTypes[typeIndex] = {
-    ...leaveTypes[typeIndex],
-    name: name || leaveTypes[typeIndex].name,
-    annualQuota: annualQuota || leaveTypes[typeIndex].annualQuota
-  };
-  
-  res.json(leaveTypes[typeIndex]);
-});
-
-app.delete('/api/leave-types/:id', authMiddleware, checkRole(['hr']), (req, res) => {
-  const { id } = req.params;
-  
-  const hasRequests = leaveRequests.some(lr => lr.leaveTypeId === parseInt(id));
-  if (hasRequests) {
-    return res.status(400).json({ error: 'Cannot delete leave type with existing requests' });
-  }
-  
-  leaveTypes = leaveTypes.filter(lt => lt.id !== parseInt(id));
-  res.json({ message: 'Leave type deleted successfully' });
-});
-
-// ============== LEAVE REQUEST ROUTES ==============
-app.get('/api/leaves/all', authMiddleware, checkRole(['hr']), (req, res) => {
-  const leavesWithDetails = leaveRequests.map(leave => {
-    const user = users.find(u => u.id === leave.userId);
-    const leaveType = leaveTypes.find(lt => lt.id === leave.leaveTypeId);
-    return {
-      ...leave,
-      User: user ? { id: user.id, username: user.username, role: user.role } : null,
-      LeaveType: leaveType
-    };
-  });
-  res.json(leavesWithDetails);
-});
-
-app.get('/api/leaves/my', authMiddleware, (req, res) => {
-  const myLeaves = leaveRequests.filter(leave => leave.userId === req.user.id);
-  const leavesWithDetails = myLeaves.map(leave => {
-    const leaveType = leaveTypes.find(lt => lt.id === leave.leaveTypeId);
-    return {
-      ...leave,
-      LeaveType: leaveType
-    };
-  });
-  res.json(leavesWithDetails);
-});
-
-app.get('/api/leaves/pending', authMiddleware, checkRole(['manager']), (req, res) => {
-  const subordinates = users.filter(u => u.managerId === req.user.id);
-  const subordinateIds = subordinates.map(s => s.id);
-  
-  const pendingLeaves = leaveRequests.filter(
-    leave => subordinateIds.includes(leave.userId) && leave.status === 'pending'
-  );
-  
-  const leavesWithDetails = pendingLeaves.map(leave => {
-    const user = users.find(u => u.id === leave.userId);
-    const leaveType = leaveTypes.find(lt => lt.id === leave.leaveTypeId);
-    return {
-      ...leave,
-      User: user ? { id: user.id, username: user.username } : null,
-      LeaveType: leaveType
-    };
-  });
-  res.json(leavesWithDetails);
-});
-
-app.post('/api/leaves/apply', authMiddleware, checkRole(['employee', 'manager']), (req, res) => {
-  const { leaveTypeId, startDate, endDate, reason } = req.body;
-  
-  const newLeave = {
-    id: leaveRequests.length + 1,
-    userId: req.user.id,
-    leaveTypeId: parseInt(leaveTypeId),
-    startDate,
-    endDate,
-    reason,
-    status: 'pending',
-    remark: null,
-    actionedById: null,
-    createdAt: new Date()
-  };
-  
-  leaveRequests.push(newLeave);
-  
-  const leaveType = leaveTypes.find(lt => lt.id === parseInt(leaveTypeId));
-  res.status(201).json({
-    ...newLeave,
-    LeaveType: leaveType
-  });
-});
-
-app.put('/api/leaves/:id/approve', authMiddleware, checkRole(['manager']), (req, res) => {
-  const { id } = req.params;
-  const { remark } = req.body;
-  
-  const leaveIndex = leaveRequests.findIndex(l => l.id === parseInt(id));
-  if (leaveIndex === -1) {
-    return res.status(404).json({ error: 'Leave request not found' });
-  }
-  
-  const leave = leaveRequests[leaveIndex];
-  
-  if (leave.userId === req.user.id) {
-    return res.status(403).json({ error: 'You cannot approve your own leave request' });
-  }
-  
-  const user = users.find(u => u.id === leave.userId);
-  
-  if (user.managerId !== req.user.id) {
-    return res.status(403).json({ error: 'You can only approve leave of your team members' });
-  }
-  
-  if (leave.status !== 'pending') {
-    return res.status(400).json({ error: 'Leave already processed' });
-  }
-  
-  leaveRequests[leaveIndex] = {
-    ...leave,
-    status: 'approved',
-    remark,
-    actionedById: req.user.id
-  };
-  
-  res.json(leaveRequests[leaveIndex]);
-});
-
-app.put('/api/leaves/:id/reject', authMiddleware, checkRole(['manager']), (req, res) => {
-  const { id } = req.params;
-  const { remark } = req.body;
-  
-  const leaveIndex = leaveRequests.findIndex(l => l.id === parseInt(id));
-  if (leaveIndex === -1) {
-    return res.status(404).json({ error: 'Leave request not found' });
-  }
-  
-  const leave = leaveRequests[leaveIndex];
-  
-  if (leave.userId === req.user.id) {
-    return res.status(403).json({ error: 'You cannot reject your own leave request' });
-  }
-  
-  const user = users.find(u => u.id === leave.userId);
-  
-  if (user.managerId !== req.user.id) {
-    return res.status(403).json({ error: 'You can only reject leave of your team members' });
-  }
-  
-  if (leave.status !== 'pending') {
-    return res.status(400).json({ error: 'Leave already processed' });
-  }
-  
-  leaveRequests[leaveIndex] = {
-    ...leave,
-    status: 'rejected',
-    remark,
-    actionedById: req.user.id
-  };
-  
-  res.json(leaveRequests[leaveIndex]);
-});
-
-// ============== ATTENDANCE ROUTES ==============
-app.get('/api/attendance/my', authMiddleware, (req, res) => {
-  const myAttendance = attendance.filter(a => a.userId === req.user.id);
-  res.json(myAttendance);
-});
-
-app.get('/api/attendance/today', authMiddleware, (req, res) => {
-  const today = new Date().toISOString().split('T')[0];
-  const todayAttendance = attendance.find(
-    a => a.userId === req.user.id && a.date === today
-  );
-  
-  res.json({
-    hasCheckedIn: !!todayAttendance?.checkIn,
-    hasCheckedOut: !!todayAttendance?.checkOut,
-    checkIn: todayAttendance?.checkIn,
-    checkOut: todayAttendance?.checkOut
-  });
-});
-
-app.post('/api/attendance/checkin', authMiddleware, checkRole(['employee', 'manager']), (req, res) => {
-  const today = new Date().toISOString().split('T')[0];
-  const existing = attendance.find(
-    a => a.userId === req.user.id && a.date === today
-  );
-  
-  if (existing && existing.checkIn) {
-    return res.status(400).json({ error: 'Already checked in today' });
-  }
-  
-  const now = new Date();
-  
-  if (existing) {
-    existing.checkIn = now;
-    res.json(existing);
-  } else {
-    const newAttendance = {
-      id: attendance.length + 1,
-      userId: req.user.id,
-      date: today,
-      checkIn: now,
-      checkOut: null,
-      totalHours: 0
-    };
-    attendance.push(newAttendance);
-    res.json(newAttendance);
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = users.find(u => u.id === decoded.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ id: user.id, username: user.username, email: user.email, role: user.role, isActive: user.isActive });
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid token' });
   }
 });
 
-app.post('/api/attendance/checkout', authMiddleware, checkRole(['employee', 'manager']), (req, res) => {
-  const today = new Date().toISOString().split('T')[0];
-  const record = attendance.find(
-    a => a.userId === req.user.id && a.date === today
-  );
-  
-  if (!record || !record.checkIn) {
-    return res.status(400).json({ error: 'Must check in first' });
-  }
-  
-  if (record.checkOut) {
-    return res.status(400).json({ error: 'Already checked out today' });
-  }
-  
-  const now = new Date();
-  record.checkOut = now;
-  res.json(record);
+// ============== OTHER ROUTES ==============
+app.get('/api/users', (req, res) => {
+  res.json(users.map(({ password, ...u }) => u));
 });
 
-app.get('/api/attendance/team', authMiddleware, checkRole(['manager', 'hr']), (req, res) => {
-  let teamAttendance;
-  
-  if (req.user.role === 'hr') {
-    teamAttendance = attendance;
-  } else {
-    const subordinates = users.filter(u => u.managerId === req.user.id);
-    const subordinateIds = subordinates.map(s => s.id);
-    teamAttendance = attendance.filter(a => subordinateIds.includes(a.userId));
-  }
-  
-  const attendanceWithUsers = teamAttendance.map(a => {
-    const user = users.find(u => u.id === a.userId);
-    return {
-      ...a,
-      User: user ? { id: user.id, username: user.username } : null
-    };
-  });
-  res.json(attendanceWithUsers);
+app.get('/api/leave-types', (req, res) => {
+  res.json([
+    { id: 1, name: 'Casual Leave', annualQuota: 12 },
+    { id: 2, name: 'Sick Leave', annualQuota: 10 },
+    { id: 3, name: 'Earned Leave', annualQuota: 15 }
+  ]);
 });
 
-// ============== DASHBOARD STATS ==============
-app.get('/api/dashboard/stats', authMiddleware, (req, res) => {
-  let stats = {};
-  
-  if (req.user.role === 'hr') {
-    stats = {
-      totalUsers: users.filter(u => u.isActive).length,
-      pendingLeaves: leaveRequests.filter(l => l.status === 'pending').length,
-      approvedLeaves: leaveRequests.filter(l => l.status === 'approved').length,
-      totalLeaves: leaveRequests.length,
-      totalLeaveTypes: leaveTypes.length
-    };
-  } else if (req.user.role === 'manager') {
-    const subordinates = users.filter(u => u.managerId === req.user.id);
-    const subordinateIds = subordinates.map(s => s.id);
-    stats = {
-      teamSize: subordinates.length,
-      pendingLeaves: leaveRequests.filter(l => subordinateIds.includes(l.userId) && l.status === 'pending').length,
-      myLeaves: leaveRequests.filter(l => l.userId === req.user.id).length
-    };
-  } else {
-    stats = {
-      myLeaves: leaveRequests.filter(l => l.userId === req.user.id).length,
-      pendingLeaves: leaveRequests.filter(l => l.userId === req.user.id && l.status === 'pending').length,
-      approvedLeaves: leaveRequests.filter(l => l.userId === req.user.id && l.status === 'approved').length
-    };
-  }
-  
-  res.json(stats);
+app.get('/api/dashboard/stats', (req, res) => {
+  res.json({ totalUsers: users.length, pendingLeaves: 2, approvedLeaves: 5, totalLeaveTypes: 3 });
 });
 
-// Start server
+// Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
-  console.log(`📍 Test API: http://localhost:${PORT}/api/test`);
-  console.log(`📍 Login API: http://localhost:${PORT}/api/auth/login`);
-  console.log(`\n📝 Login Credentials:`);
+  console.log(`\n========================================`);
+  console.log(`🚀 Server is running on port ${PORT}`);
+  console.log(`📝 Test Credentials:`);
   console.log(`   👑 HR: hr_user / password123`);
   console.log(`   📊 Manager: manager_user / password123`);
   console.log(`   👤 Employee: emp_user / password123`);
-  console.log(`\n🔗 CORS Allowed Origins:`);
-  allowedOrigins.forEach(origin => console.log(`   - ${origin}`));
+  console.log(`========================================\n`);
 });
