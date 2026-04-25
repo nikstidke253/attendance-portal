@@ -355,8 +355,9 @@ const Dashboard = () => {
   ];
   
   return (
-    <div style={containerStyles}>
+    <div className="fade-in" style={containerStyles}>
       <div style={{
+
         background: theme.gradient,
         borderRadius: isMobile ? '20px' : '24px',
         padding: isMobile ? '20px' : '32px',

@@ -68,7 +68,16 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.fade-in        { animation: fadeIn 0.5s ease-out forwards; }
+.page-transition {
+  animation: pageFadeSlide 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes pageFadeSlide {
+  0% { opacity: 0; transform: translateY(15px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.fade-in        { animation: fadeIn 0.6s ease-out forwards; }
 .slide-in       { animation: slideIn 0.4s ease-out forwards; }
 .animate-fadeInUp { animation: fadeInUp 0.6s ease-out forwards; }
 .float-anim     { animation: float 3s ease-in-out infinite; }
@@ -536,6 +545,59 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Responsive helpers */
 @media (max-width: 768px) {
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  table {
+    min-width: 600px;
+  }
+  
+  /* Timesheet Specific Mobile */
+  .timesheet-day-col {
+    width: 80px !important;
+    padding: 10px !important;
+    font-size: 11px !important;
+  }
+  
+  .timesheet-header {
+    padding: 20px !important;
+  }
+  
+  .timesheet-header h1 { font-size: 24px !important; }
+  .timesheet-header h2 { font-size: 20px !important; }
+  
+  /* Attendance Specific Mobile */
+  .attendance-btn {
+    width: 180px !important;
+    height: 180px !important;
+  }
+  
+  .attendance-btn span {
+    font-size: 18px !important;
+  }
+
+  .stat-circle {
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 16px !important;
+  }
+  
+  .stat-label {
+    font-size: 10px !important;
+  }
+  
+  .stat-value {
+    font-size: 13px !important;
+  }
+
+  .responsive-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+
   .page-header { padding: 20px; }
   .card, .glass-card { border-radius: 16px !important; margin-bottom: 16px; }
   .btn { padding: 9px 18px !important; font-size: 13px !important; }

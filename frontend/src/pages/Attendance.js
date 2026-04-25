@@ -95,6 +95,7 @@ const Attendance = () => {
       <div className="d-flex justify-content-center mb-5">
         <div 
           onClick={!status.hasCheckedIn ? handleCheckIn : (!status.hasCheckedOut ? handleCheckOut : null)}
+          className={`attendance-btn ${!status.hasCheckedOut ? 'float-anim' : ''}`}
           style={{
             width: '220px',
             height: '220px',
@@ -111,8 +112,8 @@ const Attendance = () => {
             border: 'none',
             position: 'relative'
           }}
-          className={!status.hasCheckedOut ? 'float-anim' : ''}
         >
+
           {loading ? (
             <div className="spinner-border" role="status"></div>
           ) : (
@@ -131,47 +132,48 @@ const Attendance = () => {
       {/* Stats Circles */}
       <div className="row g-0 text-center mb-5 px-2">
         <div className="col-4">
-          <div style={{ padding: '10px' }}>
-            <div style={{ 
+          <div style={{ padding: '5px' }}>
+            <div className="stat-circle" style={{ 
               width: '60px', height: '60px', borderRadius: '50%', border: '3px solid #1a3c34', 
               display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px',
               color: '#1a3c34', fontSize: '20px'
             }}>
               📥
             </div>
-            <div style={{ fontWeight: '800', color: '#1a3c34', fontSize: '15px' }}>{status.checkInTime}</div>
-            <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>Check In</div>
+            <div className="stat-value" style={{ fontWeight: '800', color: '#1a3c34', fontSize: '15px' }}>{status.checkInTime}</div>
+            <div className="stat-label" style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>Check In</div>
           </div>
         </div>
         <div className="col-4">
-          <div style={{ padding: '10px' }}>
-            <div style={{ 
+          <div style={{ padding: '5px' }}>
+            <div className="stat-circle" style={{ 
               width: '60px', height: '60px', borderRadius: '50%', border: '3px solid #1a3c34', 
               display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px',
               color: '#1a3c34', fontSize: '20px'
             }}>
               📤
             </div>
-            <div style={{ fontWeight: '800', color: '#1a3c34', fontSize: '15px' }}>{status.checkOutTime}</div>
-            <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>Check Out</div>
+            <div className="stat-value" style={{ fontWeight: '800', color: '#1a3c34', fontSize: '15px' }}>{status.checkOutTime}</div>
+            <div className="stat-label" style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>Check Out</div>
           </div>
         </div>
         <div className="col-4">
-          <div style={{ padding: '10px' }}>
-            <div style={{ 
+          <div style={{ padding: '5px' }}>
+            <div className="stat-circle" style={{ 
               width: '60px', height: '60px', borderRadius: '50%', border: '3px solid #1a3c34', 
               display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px',
               color: '#1a3c34', fontSize: '20px'
             }}>
               ✔️
             </div>
-            <div style={{ fontWeight: '800', color: '#1a3c34', fontSize: '15px' }}>
+            <div className="stat-value" style={{ fontWeight: '800', color: '#1a3c34', fontSize: '15px' }}>
               {calculateTotalHrs(status.checkInTime, status.checkOutTime).split(' ')[0]}
             </div>
-            <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>Total Hrs</div>
+            <div className="stat-label" style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>Total Hrs</div>
           </div>
         </div>
       </div>
+
 
       {/* Announcements */}
       <div className="px-2">

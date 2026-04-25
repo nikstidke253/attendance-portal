@@ -24,11 +24,12 @@ const PageTransition = ({ children }) => {
   }, [location]);
   
   return (
-    <div className="animate-fadeInUp">
+    <div key={location.pathname} className="page-transition">
       {children}
     </div>
   );
 };
+
 
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();

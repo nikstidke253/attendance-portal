@@ -73,7 +73,7 @@ const Timesheet = () => {
     <div className="fade-in" style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px', background: 'white', minHeight: '100vh' }}>
       
       {/* Document Header */}
-      <div style={{ background: tealColor, color: 'white', padding: '30px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '4px 4px 0 0' }}>
+      <div className="timesheet-header" style={{ background: tealColor, color: 'white', padding: '30px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '4px 4px 0 0' }}>
         <div className="d-flex align-items-center gap-4">
           <div style={{ background: 'white', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px' }}>
             ⏰
@@ -150,7 +150,7 @@ const Timesheet = () => {
                 const hours = calculateHours(record.checkIn, record.checkOut);
                 return (
                   <tr key={record.id || idx}>
-                    <td style={{ background: tealColor, color: 'white', fontWeight: '700', padding: '15px', textAlign: 'center', fontSize: '13px', textTransform: 'uppercase' }}>
+                    <td className="timesheet-day-col" style={{ background: tealColor, color: 'white', fontWeight: '700', padding: '15px', textAlign: 'center', fontSize: '13px', textTransform: 'uppercase' }}>
                       {getDayName(record.date).substring(0, 3)}
                     </td>
                     <td className="text-center py-3" style={{ fontSize: '14px' }}>{record.date}</td>
