@@ -226,15 +226,17 @@ app.get('/api/dashboard/stats', authenticateToken, (req, res) => {
     });
   } else if (req.user.role === 'manager') {
     res.json({
-      teamMembers: users.filter(u => u.role === 'employee').length,
+      teamSize: users.filter(u => u.role === 'employee').length,
       pendingLeaves: leaves.filter(l => l.status === 'Pending').length,
+      myLeaves: leaves.filter(l => l.userId === req.user.id).length,
       todayAttendance: attendance.filter(a => a.date === new Date().toISOString().split('T')[0]).length
     });
   } else {
     const todayRecord = attendance.find(a => a.userId === req.user.id && a.date === new Date().toISOString().split('T')[0]);
     res.json({
-      totalLeaves: leaves.filter(l => l.userId === req.user.id).length,
+      myLeaves: leaves.filter(l => l.userId === req.user.id).length,
       pendingLeaves: leaves.filter(l => l.userId === req.user.id && l.status === 'Pending').length,
+      approvedLeaves: leaves.filter(l => l.userId === req.user.id && l.status === 'Approved').length,
       todayStatus: todayRecord ? (todayRecord.checkOut ? 'Checked Out' : 'Checked In') : 'Not Checked In'
     });
   }

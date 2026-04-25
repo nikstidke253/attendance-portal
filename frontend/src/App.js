@@ -11,7 +11,9 @@ import UserManagement from './pages/UserManagement';
 import LeaveConfiguration from './pages/LeaveConfiguration';
 import Navbar from './components/Navbar';
 import SessionWarning from './components/SessionWarning';
+import { ToastContainer } from './components/Toast';
 import './styles/global.css';
+
 
 // Page Transition Component
 const PageTransition = ({ children }) => {
@@ -53,6 +55,7 @@ function AppRoutes() {
     <div style={{ minHeight: '100vh' }}>
       {isAuthenticated && <Navbar />}
       {isAuthenticated && <SessionWarning />}
+      <ToastContainer />
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -69,6 +72,7 @@ function AppRoutes() {
     </div>
   );
 }
+
 
 function App() {
   return (
