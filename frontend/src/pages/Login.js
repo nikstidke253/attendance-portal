@@ -73,13 +73,13 @@ const Login = () => {
     }
     
     setLoading(true);
-    const success = await login(username, password);
+    const result = await login(username, password);
     setLoading(false);
     
-    if (success) {
+    if (result?.success || result === true) {
       navigate('/dashboard');
     } else {
-      setError('Invalid username or password');
+      setError(result?.error || 'Invalid username or password');
     }
   };
   

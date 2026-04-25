@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import api from '../api';
 
 const ApplyLeave = () => {
+  const navigate = useNavigate();
   const [leaveTypes, setLeaveTypes] = useState([]);
   const [myLeaves, setMyLeaves] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ leaveTypeId: '', startDate: '', endDate: '', reason: '' });
   
   useEffect(() => {
@@ -12,89 +15,170 @@ const ApplyLeave = () => {
   }, []);
   
   const fetchLeaveTypes = async () => {
-    const res = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/leave-types`);
-    setLeaveTypes(res.data);
+    try {
+      const res = await api.get('/leave-types');
+      setLeaveTypes(res.data);
+    } catch (err) {
+      console.error('Error fetching leave types:', err);
+    }
   };
   
   const fetchMyLeaves = async () => {
-    const res = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/leaves/my`);
-    setMyLeaves(res.data);
+    try {
+      const res = await api.get('/leaves/my');
+      setMyLeaves(res.data);
+    } catch (err) {
+      console.error('Error fetching my leaves:', err);
+    }
   };
   
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.leaveTypeId || !form.startDate || !form.endDate || !form.reason) {
+      alert('Please fill all fields');
+      return;
+    }
+    setLoading(true);
     try {
-      await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/leaves/apply`, form);
-      alert('Leave request submitted');
+      await api.post('/leaves/apply', form);
+      alert('✅ Leave request submitted successfully!');
       setForm({ leaveTypeId: '', startDate: '', endDate: '', reason: '' });
       fetchMyLeaves();
     } catch (err) {
-      alert('Failed to submit');
+      alert(err.response?.data?.error || 'Failed to submit leave request');
     }
+    setLoading(false);
+  };
+
+  const getStatusBadge = (status) => {
+    if (status === 'Approved') return <span className="badge bg-success-soft"><i className="fas fa-check-circle me-1"></i>Approved</span>;
+    if (status === 'Rejected') return <span className="badge bg-danger-soft"><i className="fas fa-times-circle me-1"></i>Rejected</span>;
+    return <span className="badge bg-warning-soft"><i className="fas fa-clock me-1"></i>Pending</span>;
   };
   
   return (
-    <div>
-      <div style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '24px' }}>
-        <h3>Apply for Leave</h3>
-        <form onSubmit={handleSubmit}>
-          <select
-            style={{ width: '100%', padding: '10px', margin: '10px 0', borderRadius: '8px', border: '1px solid #ddd' }}
-            value={form.leaveTypeId}
-            onChange={(e) => setForm({ ...form, leaveTypeId: e.target.value })}
-            required
-          >
-            <option value="">Select Leave Type</option>
-            {leaveTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-          </select>
-          <input
-            type="date"
-            style={{ width: '100%', padding: '10px', margin: '10px 0', borderRadius: '8px', border: '1px solid #ddd' }}
-            value={form.startDate}
-            onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-            required
-          />
-          <input
-            type="date"
-            style={{ width: '100%', padding: '10px', margin: '10px 0', borderRadius: '8px', border: '1px solid #ddd' }}
-            value={form.endDate}
-            onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-            required
-          />
-          <textarea
-            placeholder="Reason"
-            style={{ width: '100%', padding: '10px', margin: '10px 0', borderRadius: '8px', border: '1px solid #ddd' }}
-            rows="3"
-            value={form.reason}
-            onChange={(e) => setForm({ ...form, reason: e.target.value })}
-            required
-          />
-          <button type="submit" style={{ padding: '10px 20px', background: '#667eea', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Submit</button>
-        </form>
+    <div className="container py-4 fade-in">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="fw-bold mb-0 text-dark">
+          <i className="fas fa-file-alt text-primary me-2"></i>
+          Apply for Leave
+        </h2>
+        <button className="btn btn-outline-secondary shadow-sm" onClick={() => navigate('/dashboard')}>
+          <i className="fas fa-arrow-left me-2"></i>Back
+        </button>
       </div>
-      
-      <div style={{ background: 'white', borderRadius: '16px', padding: '24px' }}>
-        <h3>My Leave History</h3>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: '#f0f0f0' }}>
-              <th style={{ padding: '10px', textAlign: 'left' }}>Type</th>
-              <th style={{ padding: '10px', textAlign: 'left' }}>Start</th>
-              <th style={{ padding: '10px', textAlign: 'left' }}>End</th>
-              <th style={{ padding: '10px', textAlign: 'left' }}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {myLeaves.map(l => (
-              <tr key={l.id}>
-                <td style={{ padding: '10px' }}>{l.LeaveType?.name}</td>
-                <td style={{ padding: '10px' }}>{l.startDate}</td>
-                <td style={{ padding: '10px' }}>{l.endDate}</td>
-                <td style={{ padding: '10px' }}><span style={{ color: l.status === 'pending' ? 'orange' : l.status === 'approved' ? 'green' : 'red' }}>{l.status}</span></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+
+      <div className="row g-4">
+        {/* Apply Form */}
+        <div className="col-lg-5">
+          <div className="card glass-card border-0 h-100">
+            <div className="card-body p-4">
+              <h4 className="fw-bold text-primary mb-4">
+                <i className="fas fa-plus-circle me-2"></i>New Request
+              </h4>
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <label className="form-label fw-semibold text-muted">Leave Type *</label>
+                  <select
+                    className="form-select"
+                    value={form.leaveTypeId}
+                    onChange={(e) => setForm({ ...form, leaveTypeId: e.target.value })}
+                    required
+                  >
+                    <option value="">Select Leave Type</option>
+                    {leaveTypes.map(t => <option key={t.id} value={t.id}>{t.name} ({t.annualQuota} days/year)</option>)}
+                  </select>
+                </div>
+                <div className="mb-3">
+                  <label className="form-label fw-semibold text-muted">Start Date *</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={form.startDate}
+                    onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label fw-semibold text-muted">End Date *</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={form.endDate}
+                    min={form.startDate}
+                    onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="form-label fw-semibold text-muted">Reason *</label>
+                  <textarea
+                    className="form-control"
+                    placeholder="Briefly describe the reason for your leave..."
+                    rows="3"
+                    value={form.reason}
+                    onChange={(e) => setForm({ ...form, reason: e.target.value })}
+                    required
+                  />
+                </div>
+                <button type="submit" className="btn btn-primary w-100 py-2" disabled={loading}>
+                  {loading ? (
+                    <><span className="spinner-border spinner-border-sm me-2" role="status"></span>Submitting...</>
+                  ) : (
+                    <><i className="fas fa-paper-plane me-2"></i>Submit Request</>
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        {/* Leave History */}
+        <div className="col-lg-7">
+          <div className="card glass-card border-0">
+            <div className="card-body p-0">
+              <div className="p-4 pb-0">
+                <h4 className="fw-bold text-dark">
+                  <i className="fas fa-history me-2 text-primary"></i>My Leave History
+                </h4>
+              </div>
+              <div className="table-responsive">
+                <table className="table table-hover mb-0 align-middle">
+                  <thead>
+                    <tr>
+                      <th>Leave Type</th>
+                      <th>Duration</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {myLeaves.length === 0 ? (
+                      <tr>
+                        <td colSpan="3" className="text-center py-5 text-muted">
+                          <i className="fas fa-calendar-times d-block fs-2 mb-2 opacity-25"></i>
+                          No leave requests yet.
+                        </td>
+                      </tr>
+                    ) : myLeaves.map(l => (
+                      <tr key={l.id}>
+                        <td>
+                          <span className="fw-bold text-dark">{l.type}</span>
+                          <div className="text-muted small">{l.reason}</div>
+                        </td>
+                        <td>
+                          <span className="text-muted">{l.startDate}</span>
+                          <span className="text-muted mx-1">→</span>
+                          <span className="text-muted">{l.endDate}</span>
+                        </td>
+                        <td>{getStatusBadge(l.status)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

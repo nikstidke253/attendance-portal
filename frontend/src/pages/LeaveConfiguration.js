@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 
 const LeaveConfiguration = () => {
   const [leaveTypes, setLeaveTypes] = useState([]);
@@ -17,11 +17,10 @@ const LeaveConfiguration = () => {
   
   const fetchLeaveTypes = async () => {
     try {
-      const response = await axios.get('https://attendance-portal-1-u1rw.onrender.com/api/leave-types');
+      const response = await api.get('/leave-types');
       setLeaveTypes(response.data);
     } catch (error) {
       console.error('Error fetching leave types:', error);
-      alert('Failed to fetch leave types');
     }
   };
   
@@ -35,11 +34,9 @@ const LeaveConfiguration = () => {
     setLoading(true);
     try {
       if (editing) {
-        await axios.put(`https://attendance-portal-1-u1rw.onrender.com/api/leave-types/${editing.id}`, formData);
-        alert('Leave type updated successfully');
+        await api.put(`/leave-types/${editing.id}`, formData);
       } else {
-        await axios.post('https://attendance-portal-1-u1rw.onrender.com/api/leave-types', formData);
-        alert('Leave type created successfully');
+        await api.post('/leave-types', formData);
       }
       setShowForm(false);
       setEditing(null);
@@ -54,8 +51,7 @@ const LeaveConfiguration = () => {
   const handleDelete = async (id, name) => {
     if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
       try {
-        await axios.delete(`https://attendance-portal-1-u1rw.onrender.com/api/leave-types/${id}`);
-        alert('Leave type deleted successfully');
+        await api.delete(`/leave-types/${id}`);
         fetchLeaveTypes();
       } catch (error) {
         alert(error.response?.data?.error || 'Deletion failed');
@@ -70,82 +66,116 @@ const LeaveConfiguration = () => {
   };
   
   return (
-    <div>
-      <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h3>Leave Configuration</h3>
-          <button className="btn btn-primary" onClick={() => {
+    <div className="container py-4 fade-in">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="fw-bold mb-0 text-dark"><i className="fas fa-cogs text-primary me-2"></i>Leave Configuration</h2>
+        <button 
+          className={`btn ${showForm ? 'btn-outline-secondary' : 'btn-primary'} shadow-sm`}
+          onClick={() => {
             setShowForm(!showForm);
-            setEditing(null);
-            setFormData({ name: '', annualQuota: '' });
-          }}>
-            {showForm ? 'Cancel' : '+ Add Leave Type'}
-          </button>
+            if (!showForm) {
+              setEditing(null);
+              setFormData({ name: '', annualQuota: '' });
+            }
+          }}
+        >
+          {showForm ? <><i className="fas fa-times me-2"></i>Cancel</> : <><i className="fas fa-plus me-2"></i>Add Leave Type</>}
+        </button>
+      </div>
+      
+      {showForm && (
+        <div className="card glass-card slide-in mb-4 border-0">
+          <div className="card-body p-4">
+            <h4 className="card-title fw-bold text-primary mb-4">
+              {editing ? 'Edit Leave Type' : 'Create New Leave Type'}
+            </h4>
+            <form onSubmit={handleSubmit}>
+              <div className="row g-3">
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold text-muted">Leave Type Name *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="e.g. Maternity Leave"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold text-muted">Annual Quota (days) *</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    placeholder="e.g. 15"
+                    min="0"
+                    max="365"
+                    value={formData.annualQuota}
+                    onChange={(e) => setFormData({ ...formData, annualQuota: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="mt-4 text-end">
+                <button type="submit" className="btn btn-primary px-5" disabled={loading}>
+                  {loading ? 'Saving...' : (editing ? 'Update Leave Type' : 'Create Leave Type')}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-        
-        {showForm && (
-          <form onSubmit={handleSubmit} style={{ marginBottom: '20px', padding: '20px', background: '#f9f9f9', borderRadius: '8px' }}>
-            <h4 style={{ marginBottom: '15px' }}>{editing ? 'Edit Leave Type' : 'Create Leave Type'}</h4>
-            <div className="form-group">
-              <label>Leave Type Name</label>
-              <input
-                type="text"
-                className="form-control"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Annual Quota (days)</label>
-              <input
-                type="number"
-                className="form-control"
-                value={formData.annualQuota}
-                onChange={(e) => setFormData({ ...formData, annualQuota: e.target.value })}
-                required
-              />
-            </div>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Saving...' : (editing ? 'Update' : 'Create')}
-            </button>
-          </form>
-        )}
-        
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Leave Type</th>
-                <th>Annual Quota</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leaveTypes.map(type => (
-                <tr key={type.id}>
-                  <td>{type.name}</td>
-                  <td>{type.annualQuota} days</td>
-                  <td>
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => handleEdit(type)}
-                      style={{ marginRight: '10px', padding: '5px 10px', fontSize: '12px' }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="btn btn-danger"
-                      onClick={() => handleDelete(type.id, type.name)}
-                      style={{ padding: '5px 10px', fontSize: '12px' }}
-                    >
-                      Delete
-                    </button>
-                  </td>
+      )}
+      
+      <div className="card glass-card border-0">
+        <div className="card-body p-0">
+          <div className="table-responsive">
+            <table className="table table-hover mb-0 align-middle">
+              <thead>
+                <tr>
+                  <th>Leave Type</th>
+                  <th>Annual Quota</th>
+                  <th className="text-end">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {leaveTypes.length === 0 ? (
+                  <tr>
+                    <td colSpan="3" className="text-center py-5 text-muted">No leave types configured.</td>
+                  </tr>
+                ) : leaveTypes.map(type => (
+                  <tr key={type.id}>
+                    <td>
+                      <div className="d-flex align-items-center">
+                        <div className="bg-warning-soft rounded-circle d-flex align-items-center justify-content-center me-3" style={{width:'40px', height:'40px'}}>
+                          <i className="fas fa-calendar-alt text-warning" style={{color: '#92400e'}}></i>
+                        </div>
+                        <div className="fw-bold text-dark">{type.name}</div>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="badge bg-primary-soft text-dark px-3 py-2 fs-6">
+                        {type.annualQuota} Days
+                      </span>
+                    </td>
+                    <td className="text-end">
+                      <button
+                        className="btn btn-sm btn-outline-primary me-2 shadow-none"
+                        onClick={() => handleEdit(type)}
+                      >
+                        <i className="fas fa-edit"></i> Edit
+                      </button>
+                      <button
+                        className="btn btn-sm btn-outline-danger shadow-none"
+                        onClick={() => handleDelete(type.id, type.name)}
+                      >
+                        <i className="fas fa-trash-alt"></i> Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

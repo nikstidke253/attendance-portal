@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -15,7 +15,7 @@ const Dashboard = () => {
   
   const fetchStats = async () => {
     try {
-      const res = await axios.get(`${process.env.REACT_APP_API_URL}/dashboard/stats`);
+      const res = await api.get('/dashboard/stats');
       setStats(res.data);
     } catch (err) {
       console.error('Error:', err);

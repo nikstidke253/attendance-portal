@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import api from '../api';
 
 const LeaveApproval = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [selectedLeave, setSelectedLeave] = useState(null);
-  const [remark, setRemark] = useState('');
+  const [viewType, setViewType] = useState('pending');
   const [loading, setLoading] = useState(false);
-  const [viewType, setViewType] = useState('pending'); // 'pending' or 'all'
   
   useEffect(() => {
     fetchLeaveRequests();
@@ -16,37 +17,26 @@ const LeaveApproval = () => {
   
   const fetchLeaveRequests = async () => {
     try {
-      let response;
-      if (user?.role === 'hr') {
-        // HR can view all leave requests
-        response = await axios.get('https://attendance-portal-1-u1rw.onrender.com/api/leaves/all');
-      } else if (user?.role === 'manager') {
-        // Manager can view pending leaves of team members
-        if (viewType === 'pending') {
-          response = await axios.get('https://attendance-portal-1-u1rw.onrender.com/api/leaves/pending');
-        } else {
-          response = await axios.get('https://attendance-portal-1-u1rw.onrender.com/api/leaves/all');
-        }
+      // For mock backend, we fetch all leaves or we can use the /leaves endpoint.
+      // Wait, our backend /api/leaves gives all leaves for HR/Manager.
+      const response = await api.get('/leaves');
+      let leaves = response.data || [];
+      
+      if (user?.role === 'manager' && viewType === 'pending') {
+        leaves = leaves.filter(l => l.status === 'Pending');
       }
-      setLeaveRequests(response?.data || []);
+      setLeaveRequests(leaves);
     } catch (error) {
       console.error('Error fetching leave requests:', error);
-      alert(error.response?.data?.error || 'Failed to fetch leave requests');
     }
   };
   
   const handleAction = async (action) => {
-    if (!remark.trim()) {
-      alert('Please provide a remark');
-      return;
-    }
-    
     setLoading(true);
     try {
-      await axios.put(`https://attendance-portal-1-u1rw.onrender.com/api/leaves/${selectedLeave.id}/${action}`, { remark });
-      alert(`Leave ${action}ed successfully`);
+      const status = action === 'approve' ? 'Approved' : 'Rejected';
+      await api.put(`/leaves/${selectedLeave.id}/status`, { status });
       setSelectedLeave(null);
-      setRemark('');
       fetchLeaveRequests();
     } catch (error) {
       alert(error.response?.data?.error || 'Failed to process request');
@@ -55,188 +45,148 @@ const LeaveApproval = () => {
   };
   
   const getStatusBadge = (status) => {
-    const statusMap = {
-      pending: { class: 'status-pending', text: 'Pending' },
-      approved: { class: 'status-approved', text: 'Approved' },
-      rejected: { class: 'status-rejected', text: 'Rejected' }
-    };
-    const s = statusMap[status] || statusMap.pending;
-    return <span className={s.class}>{s.text}</span>;
+    if (status === 'Approved') return <span className="badge bg-success-soft"><i className="fas fa-check-circle me-1"></i>Approved</span>;
+    if (status === 'Rejected') return <span className="badge bg-danger-soft"><i className="fas fa-times-circle me-1"></i>Rejected</span>;
+    return <span className="badge bg-warning-soft"><i className="fas fa-clock me-1"></i>Pending</span>;
   };
   
-  // HR View - All Leave Requests
-  if (user?.role === 'hr') {
-    return (
-      <div>
-        <div className="card">
-          <h3>📋 All Leave Requests</h3>
-          {leaveRequests.length === 0 ? (
-            <p style={{ textAlign: 'center', padding: '40px', color: '#6c757d' }}>
-              No leave requests found.
-            </p>
-          ) : (
-            <div className="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Employee</th>
-                    <th>Leave Type</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Reason</th>
-                    <th>Status</th>
-                    <th>Actioned By</th>
-                    <th>Remark</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leaveRequests.map(leave => (
-                    <tr key={leave.id}>
-                      <td>{leave.User?.username} ({leave.User?.role})</td>
-                      <td>{leave.LeaveType?.name}</td>
-                      <td>{leave.startDate}</td>
-                      <td>{leave.endDate}</td>
-                      <td>{leave.reason}</td>
-                      <td>{getStatusBadge(leave.status)}</td>
-                      <td>{leave.Actioner?.username || '-'}</td>
-                      <td>{leave.remark || '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-  
-  // Manager View - Pending Leave Requests
   return (
-    <div>
-      <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h3>✓ Pending Leave Requests</h3>
-          <div>
-            <button 
-              className={`btn ${viewType === 'pending' ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => setViewType('pending')}
-              style={{ marginRight: '10px' }}
-            >
-              Pending
-            </button>
-            <button 
-              className={`btn ${viewType === 'all' ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => setViewType('all')}
-            >
-              All Requests
-            </button>
+    <div className="container py-4 fade-in">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="fw-bold mb-0 text-dark">
+          <i className="fas fa-clipboard-check text-primary me-2"></i>
+          Leave Approvals
+        </h2>
+        <button className="btn btn-outline-secondary shadow-sm" onClick={() => navigate('/dashboard')}>
+          <i className="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </button>
+      </div>
+      
+      {user?.role === 'manager' && (
+        <div className="d-flex mb-4">
+          <button 
+            className={`btn ${viewType === 'pending' ? 'btn-primary' : 'btn-outline-primary'} me-2`}
+            onClick={() => setViewType('pending')}
+          >
+            Pending Requests
+          </button>
+          <button 
+            className={`btn ${viewType === 'all' ? 'btn-primary' : 'btn-outline-primary'}`}
+            onClick={() => setViewType('all')}
+          >
+            All Requests
+          </button>
+        </div>
+      )}
+
+      {selectedLeave && (
+        <div className="card glass-card slide-in border-0 mb-4">
+          <div className="card-body p-4">
+            <h4 className="fw-bold text-primary mb-3">Review Leave Request</h4>
+            <div className="row mb-3">
+              <div className="col-md-6">
+                <p className="mb-1 text-muted fw-semibold">Employee</p>
+                <p className="fw-bold">{selectedLeave.username}</p>
+              </div>
+              <div className="col-md-6">
+                <p className="mb-1 text-muted fw-semibold">Leave Type</p>
+                <p className="fw-bold">{selectedLeave.type}</p>
+              </div>
+              <div className="col-md-6">
+                <p className="mb-1 text-muted fw-semibold">Duration</p>
+                <p className="fw-bold">{selectedLeave.startDate} to {selectedLeave.endDate}</p>
+              </div>
+              <div className="col-md-6">
+                <p className="mb-1 text-muted fw-semibold">Reason</p>
+                <p className="fw-bold">{selectedLeave.reason}</p>
+              </div>
+            </div>
+            
+            {selectedLeave.userId === user?.id && (
+              <div className="alert alert-warning py-2 mb-3">
+                <i className="fas fa-exclamation-triangle me-2"></i>
+                You cannot approve or reject your own leave request.
+              </div>
+            )}
+            
+            <div className="d-flex gap-2">
+              <button 
+                className="btn btn-success px-4 shadow-none" 
+                onClick={() => handleAction('approve')} 
+                disabled={loading || selectedLeave.userId === user?.id}
+              >
+                <i className="fas fa-check me-2"></i>Approve
+              </button>
+              <button 
+                className="btn btn-danger px-4 shadow-none" 
+                onClick={() => handleAction('reject')} 
+                disabled={loading || selectedLeave.userId === user?.id}
+              >
+                <i className="fas fa-times me-2"></i>Reject
+              </button>
+              <button 
+                className="btn btn-secondary px-4 shadow-none" 
+                onClick={() => setSelectedLeave(null)}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
-        
-        {leaveRequests.length === 0 ? (
-          <p style={{ textAlign: 'center', padding: '40px', color: '#6c757d' }}>
-            {viewType === 'pending' ? 'No pending leave requests from your team members.' : 'No leave requests found.'}
-          </p>
-        ) : (
-          <div className="table-container">
-            <table>
+      )}
+
+      <div className="card glass-card border-0">
+        <div className="card-body p-0">
+          <div className="table-responsive">
+            <table className="table table-hover mb-0 align-middle">
               <thead>
                 <tr>
                   <th>Employee</th>
                   <th>Leave Type</th>
-                  <th>Start Date</th>
-                  <th>End Date</th>
-                  <th>Reason</th>
+                  <th>Duration</th>
                   <th>Status</th>
-                  {viewType === 'pending' && <th>Action</th>}
-                  {viewType === 'all' && <th>Remark</th>}
+                  <th className="text-end">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {leaveRequests.map(leave => (
+                {leaveRequests.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="text-center py-5 text-muted">
+                      No leave requests found.
+                    </td>
+                  </tr>
+                ) : leaveRequests.map(leave => (
                   <tr key={leave.id}>
-                    <td>{leave.User?.username}</td>
-                    <td>{leave.LeaveType?.name}</td>
-                    <td>{leave.startDate}</td>
-                    <td>{leave.endDate}</td>
-                    <td>{leave.reason}</td>
+                    <td>
+                      <div className="d-flex align-items-center">
+                        <div className="bg-primary-soft rounded-circle d-flex align-items-center justify-content-center me-3" style={{width:'40px', height:'40px'}}>
+                          <i className="fas fa-user text-primary"></i>
+                        </div>
+                        <div className="fw-bold text-dark">{leave.username}</div>
+                      </div>
+                    </td>
+                    <td><span className="fw-semibold text-muted">{leave.type}</span></td>
+                    <td>{leave.startDate} to {leave.endDate}</td>
                     <td>{getStatusBadge(leave.status)}</td>
-                    {viewType === 'pending' && leave.status === 'pending' && (
-                      <td>
+                    <td className="text-end">
+                      {leave.status === 'Pending' && !selectedLeave ? (
                         <button 
-                          className="btn btn-primary" 
+                          className="btn btn-sm btn-outline-primary shadow-none"
                           onClick={() => setSelectedLeave(leave)}
-                          style={{ padding: '6px 16px', fontSize: '12px' }}
                         >
                           Review
                         </button>
-                      </td>
-                    )}
-                    {viewType === 'all' && (
-                      <td>{leave.remark || '-'}</td>
-                    )}
+                      ) : (
+                        <span className="text-muted small">Reviewed</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        )}
-      </div>
-      
-      {selectedLeave && (
-        <div className="card" style={{ animation: 'fadeInUp 0.3s ease' }}>
-          <h3>📋 Review Leave Request</h3>
-          <div style={{ marginBottom: '20px' }}>
-            <p><strong>Employee:</strong> {selectedLeave.User?.username}</p>
-            <p><strong>Leave Type:</strong> {selectedLeave.LeaveType?.name}</p>
-            <p><strong>Period:</strong> {selectedLeave.startDate} to {selectedLeave.endDate}</p>
-            <p><strong>Reason:</strong> {selectedLeave.reason}</p>
-            {selectedLeave.userId === user?.id && (
-              <p style={{ color: '#f5576c', marginTop: '10px' }}>
-                ⚠️ Note: You cannot approve/reject your own leave request.
-              </p>
-            )}
-          </div>
-          
-          <div className="form-group">
-            <label>Remark *</label>
-            <textarea
-              className="form-control"
-              rows="3"
-              value={remark}
-              onChange={(e) => setRemark(e.target.value)}
-              placeholder="Enter your remark (required)..."
-            />
-          </div>
-          
-          <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
-            <button 
-              className="btn btn-success" 
-              onClick={() => handleAction('approve')} 
-              disabled={loading || selectedLeave.userId === user?.id}
-              title={selectedLeave.userId === user?.id ? "You cannot approve your own leave request" : ""}
-            >
-              ✓ Approve
-            </button>
-            <button 
-              className="btn btn-danger" 
-              onClick={() => handleAction('reject')} 
-              disabled={loading || selectedLeave.userId === user?.id}
-              title={selectedLeave.userId === user?.id ? "You cannot reject your own leave request" : ""}
-            >
-              ✗ Reject
-            </button>
-            <button 
-              className="btn" 
-              onClick={() => { setSelectedLeave(null); setRemark(''); }}
-              style={{ background: '#6c757d', color: 'white' }}
-            >
-              Cancel
-            </button>
-          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
