@@ -3,27 +3,29 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 
 const app = express();
-app.use(cors());
+
+// CORS - सर्वांना परवानगी
+app.use(cors({
+  origin: '*',
+  credentials: true
+}));
 app.use(express.json());
 
-const JWT_SECRET = 'your_super_secret_key_123';
+const JWT_SECRET = 'your_super_secret_key_12345';
 
-// Hardcoded Users
+// युजर्सची यादी (कोणतीही database नाही)
 const users = [
-  { id: 1, username: 'hr_user', password: 'password123', email: 'hr@company.com', role: 'hr', isActive: true },
-  { id: 2, username: 'manager_user', password: 'password123', email: 'manager@company.com', role: 'manager', isActive: true },
-  { id: 3, username: 'emp_user', password: 'password123', email: 'employee@company.com', role: 'employee', isActive: true }
+  { id: 1, username: 'hr_user', password: 'password123', email: 'hr@company.com', role: 'hr' },
+  { id: 2, username: 'manager_user', password: 'password123', email: 'manager@company.com', role: 'manager' },
+  { id: 3, username: 'emp_user', password: 'password123', email: 'employee@company.com', role: 'employee' }
 ];
 
 // ============== TEST ROUTES ==============
-app.get('/', (req, res) => {
-  res.send('✅ Attendance Portal Backend is running! Use /api/test to verify API.');
-});
-
 app.get('/api/test', (req, res) => {
-  res.json({ 
-    message: 'Backend is working!', 
-    status: 'active',
+  res.json({
+    success: true,
+    message: 'Backend is working properly!',
+    timestamp: new Date().toISOString(),
     users: users.map(u => ({ username: u.username, role: u.role }))
   });
 });
@@ -48,12 +50,13 @@ app.post('/api/auth/login', (req, res) => {
   const token = jwt.sign(
     { id: user.id, username: user.username, role: user.role },
     JWT_SECRET,
-    { expiresIn: '24h' }
+    { expiresIn: '7d' }
   );
   
   console.log('✅ Login successful:', username);
   
   res.json({
+    success: true,
     token,
     user: {
       id: user.id,
@@ -82,15 +85,14 @@ app.get('/api/auth/me', (req, res) => {
       id: user.id,
       username: user.username,
       email: user.email,
-      role: user.role,
-      isActive: user.isActive
+      role: user.role
     });
   } catch (error) {
     res.status(401).json({ error: 'Invalid token' });
   }
 });
 
-// ============== OTHER ROUTES ==============
+// ============== OTHER NECESSARY ROUTES ==============
 app.get('/api/users', (req, res) => {
   res.json(users.map(({ password, ...u }) => u));
 });
@@ -106,22 +108,39 @@ app.get('/api/leave-types', (req, res) => {
 app.get('/api/dashboard/stats', (req, res) => {
   res.json({
     totalUsers: users.length,
-    pendingLeaves: 2,
-    approvedLeaves: 5,
+    pendingLeaves: 0,
+    approvedLeaves: 0,
     totalLeaveTypes: 3
   });
+});
+
+app.get('/api/leaves/my', (req, res) => {
+  res.json([]);
+});
+
+app.get('/api/attendance/my', (req, res) => {
+  res.json([]);
+});
+
+app.get('/api/attendance/today', (req, res) => {
+  res.json({ hasCheckedIn: false, hasCheckedOut: false });
 });
 
 // ============== START SERVER ==============
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n========================================`);
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📍 Test API: /api/test`);
-  console.log(`📍 Login API: /api/auth/login`);
-  console.log(`\n📝 Test Credentials:`);
-  console.log(`   👑 HR: hr_user / password123`);
-  console.log(`   📊 Manager: manager_user / password123`);
-  console.log(`   👤 Employee: emp_user / password123`);
-  console.log(`========================================\n`);
+  console.log(`
+========================================
+🚀 SERVER STARTED SUCCESSFULLY!
+========================================
+📍 Port: ${PORT}
+📍 Test API: /api/test
+📍 Login API: /api/auth/login
+
+📝 TEST CREDENTIALS:
+   HR:       hr_user / password123
+   Manager:  manager_user / password123
+   Employee: emp_user / password123
+========================================
+  `);
 });
