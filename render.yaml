@@ -27,4 +27,4 @@ services:
     staticPublishPath: ./frontend/build
     envVars:
       - key: REACT_APP_API_URL
-        value: https://attendance-backend.onrender.com/api
+        value: https://attendance-portal-1-u1rw.onrender.com/api
