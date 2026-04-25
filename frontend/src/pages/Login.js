@@ -116,35 +116,48 @@ const Login = () => {
         {/* RIGHT SIDE - Form */}
         <div style={{ flex: 1.2, padding: '50px', background: 'white' }}>
           <div className="text-center mb-5">
-            <div style={{ fontSize: '40px', marginBottom: '10px' }}>👑</div>
+            <div style={{ fontSize: '40px', marginBottom: '10px' }}>
+              {selectedRole === 'hr' ? '👑' : (selectedRole === 'manager' ? '📊' : '👤')}
+            </div>
             <h2 className="fw-bold text-dark">Welcome Back</h2>
-            <p className="text-muted small">Sign in to your {selectedRole === 'manager' ? 'Team' : selectedRole.toUpperCase()} account</p>
+            <p className="text-muted small">Sign in to your {selectedRole === 'manager' ? 'Team' : (selectedRole === 'hr' ? 'HR' : 'Employee')} account</p>
           </div>
 
+
           {/* ROLE TABS */}
-          <div className="d-flex mb-5 bg-light p-2" style={{ borderRadius: '15px' }}>
+          <div className="d-flex mb-5" style={{ 
+            background: '#f1f5f9', 
+            borderRadius: '20px', 
+            padding: '8px',
+            gap: '10px'
+          }}>
             {[
-              { id: 'hr', label: '👑 HR', icon: '👑' },
-              { id: 'manager', label: '📊 Team', icon: '📊' },
-              { id: 'employee', label: '👤 Employee', icon: '👤' }
+              { id: 'hr', label: 'HR', icon: '👑' },
+              { id: 'manager', label: 'Team', icon: '📊' },
+              { id: 'employee', label: 'Employee', icon: '👤' }
             ].map(tab => (
               <button 
                 key={tab.id}
+                type="button"
                 onClick={() => { setSelectedRole(tab.id); setError(''); }}
-                className="btn border-0 py-2 flex-grow-1"
+                className="btn border-0 py-3 flex-grow-1 d-flex align-items-center justify-content-center gap-2"
                 style={{ 
-                  borderRadius: '12px',
+                  borderRadius: '16px',
                   background: selectedRole === tab.id ? 'white' : 'transparent',
-                  color: selectedRole === tab.id ? '#1e293b' : '#64748b',
-                  fontWeight: '700',
-                  boxShadow: selectedRole === tab.id ? '0 4px 6px -1px rgba(0,0,0,0.1)' : 'none',
-                  transition: 'all 0.2s'
+                  color: '#1e293b',
+                  fontWeight: '800',
+                  fontSize: '14px',
+                  boxShadow: selectedRole === tab.id ? '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)' : 'none',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  transform: selectedRole === tab.id ? 'scale(1.02)' : 'scale(1)'
                 }}
               >
+                <span style={{ fontSize: '18px' }}>{tab.icon}</span>
                 {tab.label}
               </button>
             ))}
           </div>
+
 
           {error && (
             <div className="alert alert-danger border-0 small mb-4 py-2" style={{ borderRadius: '10px' }}>
