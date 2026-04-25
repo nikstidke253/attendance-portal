@@ -9,7 +9,7 @@ export default function CheckIn() {
       const token = localStorage.getItem("token");
 
       const res = await axios.post(
-        "http://localhost:5000/checkin",
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/attendance/checkin`,
         {},
         {
           headers: {

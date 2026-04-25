@@ -12,19 +12,19 @@ const ApplyLeave = () => {
   }, []);
   
   const fetchLeaveTypes = async () => {
-    const res = await axios.get('http://localhost:5000/api/leave-types');
+    const res = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/leave-types`);
     setLeaveTypes(res.data);
   };
   
   const fetchMyLeaves = async () => {
-    const res = await axios.get('http://localhost:5000/api/leaves/my');
+    const res = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/leaves/my`);
     setMyLeaves(res.data);
   };
   
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/leaves/apply', form);
+      await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/leaves/apply`, form);
       alert('Leave request submitted');
       setForm({ leaveTypeId: '', startDate: '', endDate: '', reason: '' });
       fetchMyLeaves();

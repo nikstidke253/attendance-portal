@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
   // Function to check session validity
   const checkSession = useCallback(async () => {
     try {
-      await axios.get('http://localhost:5000/api/auth/session-check');
+      await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/session-check`);
       return true;
     } catch (error) {
       if (error.response?.status === 401) {
@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }) => {
   
   const fetchUser = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/auth/me');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/me`);
       setUser(response.data);
       setIsAuthenticated(true);
     } catch (error) {
@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }) => {
   
   const login = async (username, password) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/login`, {
         username,
         password
       });
@@ -109,7 +109,7 @@ export const AuthProvider = ({ children }) => {
   
   const logout = async () => {
     try {
-      await axios.post('http://localhost:5000/api/auth/logout');
+      await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/logout`);
     } catch (error) {
       console.error('Logout error:', error);
     }

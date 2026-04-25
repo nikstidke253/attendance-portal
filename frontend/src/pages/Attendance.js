@@ -11,7 +11,7 @@ const Attendance = () => {
   
   const fetchStatus = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/attendance/today');
+      const res = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/attendance/today`);
       setStatus(res.data);
     } catch (err) {
       console.error('Error:', err);
@@ -21,7 +21,7 @@ const Attendance = () => {
   const handleCheckIn = async () => {
     setLoading(true);
     try {
-      await axios.post('http://localhost:5000/api/attendance/checkin');
+      await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/attendance/checkin`);
       alert('✅ Checked in successfully!');
       fetchStatus();
     } catch (err) {
@@ -33,7 +33,7 @@ const Attendance = () => {
   const handleCheckOut = async () => {
     setLoading(true);
     try {
-      await axios.post('http://localhost:5000/api/attendance/checkout');
+      await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/attendance/checkout`);
       alert('✅ Checked out successfully!');
       fetchStatus();
     } catch (err) {

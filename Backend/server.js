@@ -6,7 +6,9 @@ const app = express();
 
 // CORS - सर्वांना परवानगी
 app.use(cors({
-  origin: '*',
+  origin: function (origin, callback) {
+    callback(null, true);
+  },
   credentials: true
 }));
 app.use(express.json());
