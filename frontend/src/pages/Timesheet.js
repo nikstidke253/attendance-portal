@@ -8,11 +8,10 @@ const Timesheet = () => {
   const navigate = useNavigate();
   const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => { fetchAttendance(); }, []);
-
   const [searchEmployee, setSearchEmployee] = useState('');
   const [searchDate, setSearchDate] = useState('');
+
+  useEffect(() => { fetchAttendance(); }, []);
 
   const fetchAttendance = async () => {
     setLoading(true);
@@ -67,102 +66,126 @@ const Timesheet = () => {
     alert('Feature coming soon: Generating PDF/CSV report...');
   };
 
-  const tealColor = '#1a6b61';
-  const lightTeal = '#e0f2f1';
+  // Role Based Style Config
+  const getStyle = () => {
+    if (user?.role === 'hr') return {
+      main: '#667eea',
+      header: 'linear-gradient(135deg, #4c51bf 0%, #6b46c1 100%)',
+      accent: '#9f7aea',
+      light: '#f5f3ff',
+      icon: '🏛️'
+    };
+    if (user?.role === 'manager') return {
+      main: '#f5576c',
+      header: 'linear-gradient(135deg, #f5576c 0%, #f43f5e 100%)',
+      accent: '#fb7185',
+      light: '#fff1f2',
+      icon: '📊'
+    };
+    return {
+      main: '#1a6b61',
+      header: 'linear-gradient(135deg, #1a6b61 0%, #2d8277 100%)',
+      accent: '#4db6ac',
+      light: '#e0f2f1',
+      icon: '⏰'
+    };
+  };
+
+  const theme = getStyle();
 
   return (
     <div className="fade-in" style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px', background: 'white', minHeight: '100vh' }}>
       
       {/* Document Header */}
-      <div className="timesheet-header" style={{ background: tealColor, color: 'white', padding: '30px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '4px 4px 0 0' }}>
+      <div className="timesheet-header" style={{ background: theme.header, color: 'white', padding: '30px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '8px 8px 0 0' }}>
         <div className="d-flex align-items-center gap-4">
           <div style={{ background: 'white', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px' }}>
-            ⏰
+            {theme.icon}
           </div>
           <div>
-            <h1 className="mb-0 fw-bold" style={{ fontSize: '36px', letterSpacing: '1px' }}>Employee</h1>
-            <h2 className="mb-0 fw-light" style={{ fontSize: '32px', opacity: 0.9 }}>Weekly Timesheet</h2>
+            <h1 className="mb-0 fw-bold" style={{ fontSize: '36px', letterSpacing: '1px' }}>{user?.role === 'hr' ? 'Admin' : (user?.role === 'manager' ? 'Team' : 'My')}</h1>
+            <h2 className="mb-0 fw-light" style={{ fontSize: '32px', opacity: 0.9 }}>Timesheet Record</h2>
           </div>
         </div>
-        <div className="text-end">
-          <div className="fw-bold" style={{ fontSize: '20px' }}>EMP'97 Company</div>
-          <div style={{ fontSize: '14px', opacity: 0.8 }}>www.attendanceportal.com</div>
+        <div className="text-end d-none d-md-block">
+          <div className="fw-bold" style={{ fontSize: '20px' }}>EMP'97 Portal</div>
+          <div style={{ fontSize: '14px', opacity: 0.8 }}>Report Date: {new Date().toLocaleDateString()}</div>
         </div>
       </div>
 
-      {/* Red Accent Line */}
-      <div style={{ height: '8px', background: '#e11d48', width: '100%' }}></div>
+      {/* Accent Line */}
+      <div style={{ height: '8px', background: theme.accent, width: '100%' }}></div>
 
-      {/* Employee Info Section */}
-      <div style={{ background: lightTeal, padding: '30px 40px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px', borderBottom: '1px solid #b2dfdb' }}>
+      {/* Info Section */}
+      <div style={{ background: theme.light, padding: '30px 40px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px', borderBottom: `1px solid ${theme.accent}` }}>
         <div className="d-flex flex-wrap gap-4 align-items-center">
           <div>
-            <span style={{ fontWeight: '700', fontSize: '15px', color: tealColor }}>Employee Name: </span>
+            <span style={{ fontWeight: '700', fontSize: '15px', color: theme.main }}>User: </span>
             <span style={{ fontSize: '15px', color: '#333' }}>{user?.username}</span>
           </div>
           <div>
-            <span style={{ fontWeight: '700', fontSize: '15px', color: tealColor }}>Department: </span>
-            <span style={{ fontSize: '15px', color: '#333' }}>Engineering</span>
+            <span style={{ fontWeight: '700', fontSize: '15px', color: theme.main }}>Role: </span>
+            <span style={{ fontSize: '15px', color: '#333', textTransform: 'uppercase' }}>{user?.role}</span>
           </div>
         </div>
         <div className="d-flex gap-2">
           <button className="btn btn-sm btn-outline-secondary" onClick={() => navigate('/dashboard')}>← Dashboard</button>
-          <button className="btn btn-sm btn-success" onClick={handleDownload} style={{ background: tealColor, border: 'none' }}>⬇️ Download</button>
+          <button className="btn btn-sm text-white" onClick={handleDownload} style={{ background: theme.main, border: 'none' }}>⬇️ Export Data</button>
         </div>
       </div>
 
       {/* Filters Bar */}
-      <div className="p-4 d-flex flex-wrap gap-3 align-items-center" style={{ background: '#f8fdfd' }}>
+      <div className="p-4 d-flex flex-wrap gap-3 align-items-center" style={{ background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
         <div className="d-flex align-items-center gap-2">
-          <span style={{ fontSize: '14px', fontWeight: '600' }}>Filter Date:</span>
+          <span style={{ fontSize: '14px', fontWeight: '600', color: '#64748b' }}>Date:</span>
           <input type="date" className="form-control form-control-sm" value={searchDate} onChange={e => setSearchDate(e.target.value)} style={{ width: '150px' }} />
         </div>
         {(user?.role === 'hr' || user?.role === 'manager') && (
           <div className="d-flex align-items-center gap-2">
-            <span style={{ fontSize: '14px', fontWeight: '600' }}>Search Employee:</span>
-            <input type="text" className="form-control form-control-sm" placeholder="Name..." value={searchEmployee} onChange={e => setSearchEmployee(e.target.value)} style={{ width: '180px' }} />
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#64748b' }}>Staff Name:</span>
+            <input type="text" className="form-control form-control-sm" placeholder="Search..." value={searchEmployee} onChange={e => setSearchEmployee(e.target.value)} style={{ width: '180px' }} />
           </div>
         )}
-        <button className="btn btn-sm btn-link text-decoration-none" onClick={() => { setSearchDate(''); setSearchEmployee(''); }} style={{ color: tealColor }}>Clear Filters</button>
-        <div className="ms-auto text-muted" style={{ fontSize: '13px' }}>Found {filtered.length} records</div>
+        <button className="btn btn-sm btn-link text-decoration-none" onClick={() => { setSearchDate(''); setSearchEmployee(''); }} style={{ color: theme.main }}>Reset</button>
+        <div className="ms-auto text-muted" style={{ fontSize: '13px' }}>Records: {filtered.length}</div>
       </div>
 
-      {/* Timesheet Table */}
-      <div className="p-0 mt-0">
+      {/* Table */}
+      <div className="p-0">
         <div className="table-responsive">
-          <table className="table table-bordered mb-0" style={{ borderCollapse: 'collapse', width: '100%', border: `2px solid ${tealColor}` }}>
+          <table className="table table-bordered mb-0" style={{ borderCollapse: 'collapse', width: '100%', border: `2px solid ${theme.main}` }}>
             <thead>
-              <tr style={{ background: tealColor, color: 'white' }}>
-                <th style={{ width: '140px', border: 'none', textAlign: 'center' }}>Day</th>
+              <tr style={{ background: theme.main, color: 'white' }}>
+                <th className="timesheet-day-col" style={{ width: '140px', border: 'none', textAlign: 'center' }}>Day</th>
                 <th className="py-3 text-center" style={{ fontWeight: '600', border: '1px solid rgba(255,255,255,0.2)' }}>Date</th>
-                {(user?.role === 'hr' || user?.role === 'manager') && <th className="py-3 text-center" style={{ fontWeight: '600', border: '1px solid rgba(255,255,255,0.2)' }}>Employee</th>}
-                <th className="py-3 text-center" style={{ fontWeight: '600', border: '1px solid rgba(255,255,255,0.2)' }}>Time In</th>
-                <th className="py-3 text-center" style={{ fontWeight: '600', border: '1px solid rgba(255,255,255,0.2)' }}>Time Out</th>
-                <th className="py-3 text-center" style={{ fontWeight: '600', border: '1px solid rgba(255,255,255,0.2)' }}>Total Hours</th>
+                {(user?.role === 'hr' || user?.role === 'manager') && <th className="py-3 text-center" style={{ fontWeight: '600', border: '1px solid rgba(255,255,255,0.2)' }}>Staff</th>}
+                <th className="py-3 text-center" style={{ fontWeight: '600', border: '1px solid rgba(255,255,255,0.2)' }}>In</th>
+                <th className="py-3 text-center" style={{ fontWeight: '600', border: '1px solid rgba(255,255,255,0.2)' }}>Out</th>
+                <th className="py-3 text-center" style={{ fontWeight: '600', border: '1px solid rgba(255,255,255,0.2)' }}>Duration</th>
                 <th className="py-3 text-center" style={{ fontWeight: '600', border: '1px solid rgba(255,255,255,0.2)' }}>Status</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="7" className="text-center py-5"><div className="spinner-border text-teal" role="status"></div></td></tr>
+                <tr><td colSpan="7" className="text-center py-5"><div className="spinner-border" style={{ color: theme.main }} role="status"></div></td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan="7" className="text-center py-5 text-muted">No attendance records found.</td></tr>
+                <tr><td colSpan="7" className="text-center py-5 text-muted">No records match filters.</td></tr>
               ) : filtered.map((record, idx) => {
                 const hours = calculateHours(record.checkIn, record.checkOut);
                 return (
                   <tr key={record.id || idx}>
-                    <td className="timesheet-day-col" style={{ background: tealColor, color: 'white', fontWeight: '700', padding: '15px', textAlign: 'center', fontSize: '13px', textTransform: 'uppercase' }}>
+                    <td className="timesheet-day-col" style={{ background: theme.main, color: 'white', fontWeight: '700', padding: '15px', textAlign: 'center', fontSize: '13px', textTransform: 'uppercase' }}>
                       {getDayName(record.date).substring(0, 3)}
                     </td>
                     <td className="text-center py-3" style={{ fontSize: '14px' }}>{record.date}</td>
-                    {(user?.role === 'hr' || user?.role === 'manager') && <td className="text-center py-3 fw-bold" style={{ fontSize: '14px', color: tealColor }}>{record.username}</td>}
-                    <td className="text-center py-3" style={{ fontSize: '14px', background: '#f8fdfd' }}>{record.checkIn || '—'}</td>
-                    <td className="text-center py-3" style={{ fontSize: '14px', background: '#f8fdfd' }}>{record.checkOut || '—'}</td>
-                    <td className="text-center py-3" style={{ fontSize: '14px', fontWeight: '700', color: tealColor }}>{formatHrs(hours)}</td>
+                    {(user?.role === 'hr' || user?.role === 'manager') && <td className="text-center py-3 fw-bold" style={{ fontSize: '14px', color: theme.main }}>{record.username}</td>}
+                    <td className="text-center py-3" style={{ fontSize: '14px', background: theme.light + '40' }}>{record.checkIn || '—'}</td>
+                    <td className="text-center py-3" style={{ fontSize: '14px', background: theme.light + '40' }}>{record.checkOut || '—'}</td>
+                    <td className="text-center py-3" style={{ fontSize: '14px', fontWeight: '700', color: theme.main }}>{formatHrs(hours)}</td>
                     <td className="text-center py-3">
                       {record.checkOut ? 
-                        <span className="badge bg-success-soft" style={{ background: '#e8f5e9', color: '#2e7d32' }}>Completed</span> : 
-                        <span className="badge bg-warning-soft" style={{ background: '#fff3e0', color: '#ef6c00' }}>Active</span>
+                        <span className="badge" style={{ background: '#d1fae5', color: '#065f46' }}>Success</span> : 
+                        <span className="badge" style={{ background: '#fef3c7', color: '#92400e' }}>Active</span>
                       }
                     </td>
                   </tr>
@@ -173,17 +196,11 @@ const Timesheet = () => {
         </div>
       </div>
 
-
       <div className="mt-5 p-4 text-center">
-        <button className="btn btn-outline-secondary px-5" onClick={() => navigate('/dashboard')}>
-          Back to Dashboard
+        <button className="btn btn-link text-decoration-none fw-bold" style={{ color: theme.main }} onClick={() => navigate('/dashboard')}>
+          ← Return to Dashboard
         </button>
       </div>
-      
-      <style>{`
-        .text-teal { color: #1a6b61 !important; }
-        table th, table td { vertical-align: middle !important; }
-      `}</style>
     </div>
   );
 };

@@ -36,13 +36,13 @@ const HRDashboard = ({ stats, user, navigate }) => {
       {/* Primary KPIs */}
       <div className="row g-3 mb-4">
         {[
-          { label: 'Total Workforce', value: stats.totalEmployees || 0, icon: '👥', color: '#667eea', bg: '#f0f4ff' },
-          { label: 'Active Today', value: stats.activeUsers || 0, icon: '✅', color: '#10b981', bg: '#ecfdf5' },
-          { label: 'Pending Approvals', value: stats.pendingLeaves || 0, icon: '⏳', color: '#f59e0b', bg: '#fffbeb' },
-          { label: 'Departments', value: '8', icon: '🏛️', color: '#7c3aed', bg: '#f5f3ff' }
+          { label: 'Total Workforce', value: stats.totalEmployees || 0, icon: '👥', color: '#667eea', bg: '#f0f4ff', path: '/user-management' },
+          { label: 'Active Today', value: stats.activeUsers || 0, icon: '✅', color: '#10b981', bg: '#ecfdf5', path: '/timesheet' },
+          { label: 'Pending Approvals', value: stats.pendingLeaves || 0, icon: '⏳', color: '#f59e0b', bg: '#fffbeb', path: '/leave-approval' },
+          { label: 'Departments', value: '8', icon: '🏛️', color: '#7c3aed', bg: '#f5f3ff', path: '/user-management' }
         ].map((kpi, i) => (
-          <div className="col-md-3" key={i}>
-            <div className="card border-0 h-100 shadow-sm" style={{ borderRadius: '16px' }}>
+          <div className="col-md-3" key={i} onClick={() => navigate(kpi.path)} style={{ cursor: 'pointer' }}>
+            <div className="card border-0 h-100 shadow-sm kpi-card" style={{ borderRadius: '16px', transition: 'transform 0.2s' }}>
               <div className="card-body p-4">
                 <div style={{ fontSize: '24px', marginBottom: '10px' }}>{kpi.icon}</div>
                 <div style={{ fontSize: '13px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{kpi.label}</div>
@@ -291,14 +291,14 @@ const EmployeeDashboard = ({ stats, user, navigate }) => {
           <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '24px' }}>
             <div className="card-body p-4">
               <h5 className="fw-bold mb-4">Your Summary</h5>
-              <div className="d-flex align-items-center gap-3 mb-4 p-3" style={{ background: '#f0f8ff', borderRadius: '16px' }}>
+              <div className="d-flex align-items-center gap-3 mb-4 p-3 kpi-card" style={{ background: '#f0f8ff', borderRadius: '16px', cursor: 'pointer', transition: 'all 0.2s' }} onClick={() => navigate('/apply-leave')}>
                 <div style={{ fontSize: '24px' }}>🌴</div>
                 <div>
                   <div style={{ fontSize: '20px', fontWeight: '800', color: '#4facfe' }}>{stats.myLeaves || 0}</div>
                   <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>Leaves Taken</div>
                 </div>
               </div>
-              <div className="d-flex align-items-center gap-3 p-3" style={{ background: '#ecfdf5', borderRadius: '16px' }}>
+              <div className="d-flex align-items-center gap-3 p-3 kpi-card" style={{ background: '#ecfdf5', borderRadius: '16px', cursor: 'pointer', transition: 'all 0.2s' }} onClick={() => navigate('/apply-leave')}>
                 <div style={{ fontSize: '24px' }}>✅</div>
                 <div>
                   <div style={{ fontSize: '20px', fontWeight: '800', color: '#10b981' }}>{stats.approvedLeaves || 0}</div>

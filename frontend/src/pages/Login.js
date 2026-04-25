@@ -76,12 +76,23 @@ const Login = () => {
     const result = await login(username, password);
     setLoading(false);
     
-    if (result?.success || result === true) {
+    // Check if login was successful and role matches
+    if (result === true || result?.success) {
+      // We need to check the user role from localStorage or context if it's not returned in result
+      const storedUser = JSON.parse(localStorage.getItem('user'));
+      if (storedUser && storedUser.role !== selectedRole) {
+        // Logout if role doesn't match
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setError(`Access denied. Please login using an ${selectedRole.toUpperCase()} account.`);
+        return;
+      }
       navigate('/dashboard');
     } else {
       setError(result?.error || 'Invalid username or password');
     }
   };
+
   
   const currentRole = roleCredentials[selectedRole];
   
