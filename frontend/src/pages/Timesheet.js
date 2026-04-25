@@ -12,6 +12,7 @@ const Timesheet = () => {
   useEffect(() => { fetchAttendance(); }, []);
 
   const [searchEmployee, setSearchEmployee] = useState('');
+  const [searchDate, setSearchDate] = useState('');
 
   const fetchAttendance = async () => {
     setLoading(true);

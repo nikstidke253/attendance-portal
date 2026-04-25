@@ -217,30 +217,33 @@ app.post('/api/attendance/checkout', authenticateToken, (req, res) => {
 
 // ============== DASHBOARD STATS ==============
 app.get('/api/dashboard/stats', authenticateToken, (req, res) => {
+  const today = new Date().toISOString().split('T')[0];
+  
   if (req.user.role === 'hr') {
     res.json({
-      totalUsers: users.length,
+      totalEmployees: users.length,
+      activeUsers: attendance.filter(a => a.date === today && !a.checkOut).length,
       pendingLeaves: leaves.filter(l => l.status === 'Pending').length,
-      approvedLeaves: leaves.filter(l => l.status === 'Approved').length,
-      totalLeaveTypes: leaveTypes.length
+      approvedLeaves: leaves.filter(l => l.status === 'Approved').length
     });
   } else if (req.user.role === 'manager') {
     res.json({
       teamSize: users.filter(u => u.role === 'employee').length,
       pendingLeaves: leaves.filter(l => l.status === 'Pending').length,
-      myLeaves: leaves.filter(l => l.userId === req.user.id).length,
-      todayAttendance: attendance.filter(a => a.date === new Date().toISOString().split('T')[0]).length
+      activeToday: attendance.filter(a => a.date === today && !a.checkOut).length,
+      myLeaves: leaves.filter(l => l.userId === req.user.id).length
     });
   } else {
-    const todayRecord = attendance.find(a => a.userId === req.user.id && a.date === new Date().toISOString().split('T')[0]);
+    const todayRecord = attendance.find(a => a.userId === req.user.id && a.date === today);
     res.json({
       myLeaves: leaves.filter(l => l.userId === req.user.id).length,
-      pendingLeaves: leaves.filter(l => l.userId === req.user.id && l.status === 'Pending').length,
       approvedLeaves: leaves.filter(l => l.userId === req.user.id && l.status === 'Approved').length,
+      pendingLeaves: leaves.filter(l => l.userId === req.user.id && l.status === 'Pending').length,
       todayStatus: todayRecord ? (todayRecord.checkOut ? 'Checked Out' : 'Checked In') : 'Not Checked In'
     });
   }
 });
+
 
 // ============== START SERVER ==============
 const PORT = process.env.PORT || 5000;
